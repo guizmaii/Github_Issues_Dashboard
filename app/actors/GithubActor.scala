@@ -15,20 +15,23 @@ case class Repository(owner: String, name: String)
 
 object GithubActor {
 
-  lazy val githubApiUrl = "https://api.github.com"
+  val githubApiUrl = "https://api.github.com"
 
   import play.api.Play
 
-  lazy val login = Play.current.configuration.getString("github.login").get
-  lazy val password = Play.current.configuration.getString("github.password").get
+  val login = Play.current.configuration.getString("github.login").get
+  val password = Play.current.configuration.getString("github.password").get
 
 }
 
 class GithubActor extends Actor {
 
+  import play.api.Play.current
+
   val redisActor = Akka.system.actorOf(Props[RedisActor])
 
   override def receive: Receive = {
+
     case repo: Repository =>
       Logger.debug("Next Repo : " + repo.owner + "/" + repo.name)
 
@@ -41,6 +44,7 @@ class GithubActor extends Actor {
             case nextLink: Some[String] => self ! nextLink.get
           }
       }
+
     case link: String =>
       Logger.debug("Next call : " + link)
 
@@ -53,6 +57,7 @@ class GithubActor extends Actor {
             case nextLink: Some[String] => self ! nextLink.get
           }
       }
+
     case error =>
       Logger.error("ERREUR : " + error)
   }

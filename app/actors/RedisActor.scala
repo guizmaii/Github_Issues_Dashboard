@@ -18,6 +18,7 @@ class RedisActor extends Actor {
   val client = new RedisClient(RedisActor.host, RedisActor.port)
 
   override def receive: Receive = {
+
     case data: JsArray => {
 
     }
