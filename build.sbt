@@ -8,7 +8,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick" % "0.6.0.1",
   "org.springframework.security" % "spring-security-crypto" % "3.2.3.RELEASE",
   "com.typesafe.slick" %% "slick" % "2.0.1",
-  "net.debasishg" % "redisclient_2.10" % "2.13",
+  "net.debasishg" % "redisclient_2.10" % "2.12",
   "com.h2database" % "h2" % "1.3.175" % "test"
 )
 
