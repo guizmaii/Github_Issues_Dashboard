@@ -8,10 +8,11 @@ import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.mutable
 import com.ning.http.client.Realm.AuthScheme
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, JsArray, Json}
 import play.api.libs.concurrent.Akka
+import scala.collection.mutable.ListBuffer
 
-case class Repository(owner: String, name: String)
+case class GithubRepository(owner: String, name: String)
 
 object GithubActor {
 
@@ -30,33 +31,35 @@ class GithubActor extends Actor {
 
   val redisActor = Akka.system.actorOf(Props[RedisActor])
 
+  val repoName = new StringBuffer()
+  val repoOwner = new StringBuffer()
+
+  val issues = new ListBuffer[JsValue]()
+
   override def receive: Receive = {
 
-    case repo: Repository =>
+    case repo: GithubRepository =>
       Logger.debug("Next Repo : " + repo.owner + "/" + repo.name)
 
-      getIssues(repo.owner, repo.name) map {
-        response =>
+      repoName append repo.name
+      repoOwner append repo.owner
 
-          redisActor ! Json.parse(response.body)
-
-          parseLinkHeader(response.header("Link").get).get("next") match {
-            case nextLink: Some[String] => self ! nextLink.get
-          }
-      }
+      getIssues(repo.owner, repo.name)
+        .map {
+          response =>
+            handleGithubResponse(response)
+        }
 
     case link: String =>
       Logger.debug("Next call : " + link)
 
-      WS.url(link).withAuth(GithubActor.login, GithubActor.password, AuthScheme.BASIC).get() map {
-        response =>
-
-          redisActor ! Json.parse(response.body)
-
-          parseLinkHeader(response.header("Link").get).get("next") match {
-            case nextLink: Some[String] => self ! nextLink.get
-          }
-      }
+      WS.url(link)
+        .withAuth(GithubActor.login, GithubActor.password, AuthScheme.BASIC)
+        .get()
+        .map {
+          response =>
+            handleGithubResponse(response)
+        }
 
     case error =>
       Logger.error("ERREUR : " + error)
@@ -80,6 +83,21 @@ class GithubActor extends Actor {
   }
 
   /**
+   *
+   * @param response
+   */
+  private def handleGithubResponse(response: Response) {
+    issues ++= Json.parse(response.body).asInstanceOf[JsArray].value
+
+    parseLinkHeader(response.header("Link").get).get("next") match {
+      case nextLink: Some[String] =>
+        self ! nextLink.get
+      case _ =>
+        self ! cacheIssues()
+    }
+  }
+
+  /**
    * Parse the Github Link HTTP header used for pagination
    *
    * http://developer.github.com/v3/#pagination
@@ -99,6 +117,13 @@ class GithubActor extends Actor {
         linkMap(name) = url
     }
     linkMap
+  }
+
+  /**
+   * Ask to the Redis actor to persist the issues
+   */
+  private def cacheIssues() {
+    redisActor ! RedisRepository(repoName.toString, repoOwner.toString, issues.toList)
   }
 
 }

@@ -2,14 +2,17 @@ package actors
 
 import akka.actor.Actor
 import com.redis._
-import play.api.libs.json.JsArray
+import play.api.libs.json.JsValue
 import play.api.Logger
+
+case class RedisRepository(repoName: String, repoOwner: String, issues: List[JsValue])
 
 object RedisActor {
 
-  lazy val host = "localhost"
+  import play.api.Play
 
-  lazy val port = 6379
+  val host: String = Play.current.configuration.getString("redis.host").get
+  val port: Int = Integer.parseInt(Play.current.configuration.getString("redis.port").get)
 
 }
 
@@ -19,9 +22,8 @@ class RedisActor extends Actor {
 
   override def receive: Receive = {
 
-    case data: JsArray => {
-
-    }
+    case repo: RedisRepository =>
+      // TODO : Coder l'enregistrement des données
 
     case error =>
       Logger.error("ERREUR : " + error)
