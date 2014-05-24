@@ -8,7 +8,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.mutable
 import com.ning.http.client.Realm.AuthScheme
 import play.api.Logger
-import play.api.libs.json.{JsValue, JsArray, Json}
+import play.api.libs.json.{JsValue, JsArray}
 import play.api.libs.concurrent.Akka
 import scala.collection.mutable.ListBuffer
 
@@ -46,9 +46,9 @@ class GithubActor extends Actor {
 
       getIssues(repo.owner, repo.name)
         .map {
-          response =>
-            handleGithubResponse(response)
-        }
+        response =>
+          handleGithubResponse(response)
+      }
 
     case link: String =>
       Logger.debug(s"GithubActor | Next call : $link")
@@ -57,9 +57,9 @@ class GithubActor extends Actor {
         .withAuth(GithubActor.login, GithubActor.password, AuthScheme.BASIC)
         .get()
         .map {
-          response =>
-            handleGithubResponse(response)
-        }
+        response =>
+          handleGithubResponse(response)
+      }
 
     case error: Exception =>
       Logger.error(s"GithubActor | ERROR : ${error.getMessage}")
