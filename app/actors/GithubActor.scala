@@ -39,7 +39,7 @@ class GithubActor extends Actor {
   override def receive: Receive = {
 
     case repo: GithubRepository =>
-      Logger.debug("Next Repo : " + repo.owner + "/" + repo.name)
+      Logger.debug(s"GithubActor | Next Repo : ${repo.owner}/${repo.name}")
 
       repoName append repo.name
       repoOwner append repo.owner
@@ -51,7 +51,7 @@ class GithubActor extends Actor {
         }
 
     case link: String =>
-      Logger.debug("Next call : " + link)
+      Logger.debug(s"GithubActor | Next call : $link")
 
       WS.url(link)
         .withAuth(GithubActor.login, GithubActor.password, AuthScheme.BASIC)
@@ -61,8 +61,8 @@ class GithubActor extends Actor {
             handleGithubResponse(response)
         }
 
-    case error =>
-      Logger.error("ERREUR : " + error)
+    case error: Exception =>
+      Logger.error(s"GithubActor | ERROR : ${error.getMessage}")
   }
 
   /**
@@ -87,7 +87,7 @@ class GithubActor extends Actor {
    * @param response
    */
   private def handleGithubResponse(response: Response) {
-    issues ++= Json.parse(response.body).asInstanceOf[JsArray].value
+    issues ++= response.json.asInstanceOf[JsArray].value
 
     parseLinkHeader(response.header("Link").get).get("next") match {
       case nextLink: Some[String] =>
