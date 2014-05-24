@@ -12,9 +12,9 @@ object Global extends GlobalSettings {
     import play.api.Play.current
 
     val repos = List(
-      GithubRepository("junit-team", "junit"),
-      GithubRepository("scala", "scala"),
-      GithubRepository("rails", "rails"),
+//      GithubRepository("junit-team", "junit"),
+//      GithubRepository("scala", "scala"),
+//      GithubRepository("rails", "rails"),
       GithubRepository("ruby", "ruby")
     )
 

@@ -87,6 +87,11 @@ class GithubActor extends Actor {
    * @param response
    */
   private def handleGithubResponse(response: Response) {
+    /*
+      TODO : Ajouter un filtre pour les dépôt dont les issues sont disabled (comme Ruby)
+      TODO : ET/OU Tester à l'ajout du dépot dans le system si celui-ci gére des issues
+     */
+
     issues ++= response.json.asInstanceOf[JsArray].value
 
     parseLinkHeader(response.header("Link").get).get("next") match {
