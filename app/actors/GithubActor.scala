@@ -11,7 +11,9 @@ import play.api.libs.json.{JsValue, JsArray}
 import play.api.libs.concurrent.Akka
 import scala.collection.mutable.ListBuffer
 
-// TODO : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
+// TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
+// TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/
+// TODO 2 (maybe) : Utiliser les conditional request pour baisser le nombre de requests nécessaire : https://developer.github.com/v3/#conditional-requests
 
 
 case class GithubRepository(owner: String, name: String)
