@@ -81,6 +81,7 @@ class GithubActor extends Actor {
   private def getIssues(owner: String, repo: String): Future[Response] = {
     WS.url(GithubActor.githubApiUrl + s"/repos/$owner/$repo/issues")
       .withQueryString(
+        "per_page" -> "100",
         "state" -> "all",
         "sort" -> "created",
         "direction" -> "asc"
