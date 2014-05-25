@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.{Props, Actor}
+import akka.actor.{PoisonPill, Props, Actor}
 import scala.concurrent.Future
 import play.api.libs.ws.{WS, Response}
 
@@ -41,7 +41,7 @@ class GithubActor extends Actor {
 
   override def receive: Receive = {
 
-    case repo: GithubRepository =>
+    case repo: GithubRepository => {
       Logger.debug(s"GithubActor | Next Repo : ${repo.owner}/${repo.name}")
 
       repoName append repo.name
@@ -52,8 +52,10 @@ class GithubActor extends Actor {
         response =>
           handleGithubResponse(response)
       }
+    }
 
-    case link: String =>
+
+    case link: String => {
       Logger.debug(s"GithubActor | Next call : $link")
 
       WS.url(link)
@@ -66,6 +68,7 @@ class GithubActor extends Actor {
         response =>
           handleGithubResponse(response)
       }
+    }
 
     case error: Exception =>
       Logger.error(s"GithubActor | ERROR : ${error.getMessage}")
@@ -97,7 +100,9 @@ class GithubActor extends Actor {
   private def handleGithubResponse(response: Response) {
     response.status match {
       case 200 => handleGithubOkResponse(response)
-      case _ => handleGithubErrorResponse(response)
+      case _ =>
+        handleGithubErrorResponse(response)
+        self ! PoisonPill
     }
   }
 
@@ -112,7 +117,8 @@ class GithubActor extends Actor {
       case nextLink: Some[String] =>
         self ! nextLink.get
       case _ =>
-        self ! cacheIssues()
+        redisActor ! RedisRepository(repoName.toString, repoOwner.toString, issues.toList)
+        self ! PoisonPill
     }
   }
 
@@ -148,13 +154,6 @@ class GithubActor extends Actor {
         linkMap(name) = url
     }
     linkMap
-  }
-
-  /**
-   * Ask to the Redis actor to persist the issues
-   */
-  private def cacheIssues() {
-    redisActor ! RedisRepository(repoName.toString, repoOwner.toString, issues.toList)
   }
 
 }
