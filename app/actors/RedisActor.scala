@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.Actor
+import akka.actor.{PoisonPill, Actor}
 import com.redis._
 import play.api.libs.json.JsValue
 import play.api.Logger
@@ -16,6 +16,8 @@ object RedisActor {
 
   val clients = new RedisClientPool(host, port)
 
+  val MASTER_KEY = "data"
+
 }
 
 class RedisActor extends Actor {
@@ -23,19 +25,22 @@ class RedisActor extends Actor {
   override def receive: Receive = {
 
     // TODO : Coder & Tester la récupération des données
-    case repo: RedisRepository =>
+    case repo: RedisRepository => {
       Logger.debug(s"RedisActor | Repo reçu pour sauvegarde : ${repo.owner}/${repo.name}")
       
       RedisActor.clients.withClient {
         client => {
-          val key = s"data:${repo.owner}:${repo.name}"
+          val key = s"${repo.owner}:${repo.name}"
 
           client.del(key)
 
-          repo.issues.map(client.rpush(key, _))
-          Logger.info(s"RedisActor | N° of key inserted in key ($key) : ${client.llen(key)}")
+          client.hset(RedisActor.MASTER_KEY, key, repo.issues)
+
+          Logger.debug(s"RedisActor | N° of key inserted in $key : ${client.hgetall(RedisActor.MASTER_KEY).get.size}")
         }
       }
+      self ! PoisonPill
+    }
 
     case error: Exception =>
       Logger.error(s"RedisActor | ERROR : ${error.getMessage}")
