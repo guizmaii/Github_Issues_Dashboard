@@ -54,7 +54,6 @@ class GithubActor extends Actor {
       }
     }
 
-
     case link: String => {
       Logger.debug(s"GithubActor | Next call : $link")
 
@@ -72,6 +71,7 @@ class GithubActor extends Actor {
 
     case error: Exception =>
       Logger.error(s"GithubActor | ERROR : ${error.getMessage}")
+      throw error
   }
 
   /**
