@@ -1,11 +1,9 @@
 package actors
 
-import akka.actor.{PoisonPill, Actor}
+import akka.actor.Actor
 import com.redis._
-import play.api.libs.json.JsValue
 import play.api.Logger
-
-case class RedisRepository(name: String, owner: String, issues: List[JsValue])
+import actors.compute.ComputedRepositoryData
 
 object RedisActor {
 
@@ -25,25 +23,24 @@ class RedisActor extends Actor {
   override def receive: Receive = {
 
     // TODO : Coder & Tester la récupération des données
-    case repo: RedisRepository => {
-      Logger.debug(s"RedisActor | Repo reçu pour sauvegarde : ${repo.owner}/${repo.name}")
-      
+    case data: ComputedRepositoryData =>
+      Logger.debug(s"${this.getClass} | Repo reçu pour sauvegarde : ${data.repoOwner}/${data.repoName}")
+
       RedisActor.clients.withClient {
         client => {
-          val key = s"${repo.owner}:${repo.name}"
+          val key = s"${data.repoOwner}:${data.repoName}:${data.graph}"
 
           client.del(key)
 
-          client.hset(RedisActor.MASTER_KEY, key, repo.issues)
+          client.hset(RedisActor.MASTER_KEY, key, data.computedData)
 
-          Logger.debug(s"RedisActor | N° of key inserted in $key : ${client.hgetall(RedisActor.MASTER_KEY).get.size}")
+          // TODO : To delete
+          Logger.debug(s"${this.getClass} | N° of key inserted in $key : ${client.hgetall(RedisActor.MASTER_KEY).get.size}")
         }
       }
-      self ! PoisonPill
-    }
 
     case error: Exception =>
-      Logger.error(s"RedisActor | ERROR : ${error.getMessage}")
+      Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
       throw error
   }
 
