@@ -1,6 +1,6 @@
 package actors.compute
 
-import akka.actor.Actor
+import akka.actor.{PoisonPill, Actor}
 import actors.{ParsedRepositoryData, Redisable}
 import play.api.Logger
 
@@ -15,6 +15,8 @@ class G2Actor extends Actor with Redisable {
 
     case error: Exception =>
       Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
+      // TODO : Valider l'utiliter de s'envoyer une PoisonPill
+      self ! PoisonPill
       throw error
   }
 

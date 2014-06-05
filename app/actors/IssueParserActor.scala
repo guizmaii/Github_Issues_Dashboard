@@ -120,6 +120,8 @@ class IssueParserActor extends Actor {
 
     case error: Exception =>
       Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
+      // TODO : Valider l'utiliter de s'envoyer une PoisonPill
+      self ! PoisonPill
       throw error
   }
 

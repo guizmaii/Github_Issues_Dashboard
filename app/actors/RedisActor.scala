@@ -41,7 +41,6 @@ class RedisActor extends Actor {
 
     case error: Exception =>
       Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
-      throw error
   }
 
 }
