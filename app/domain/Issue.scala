@@ -1,4 +1,4 @@
-package actors.domain
+package domain
 
 case class GithubIssue(url: String,
                        labels_url: String,
