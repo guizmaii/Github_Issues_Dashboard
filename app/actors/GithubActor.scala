@@ -10,13 +10,15 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, JsArray}
 import play.api.libs.concurrent.Akka
 import scala.collection.mutable.ListBuffer
+import actors.compute.{G4Actor, G3Actor, G2Actor, G1Actor}
 
 // TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
 // TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/
 // TODO 2 (maybe) : Utiliser les conditional request pour baisser le nombre de requests nécessaire : https://developer.github.com/v3/#conditional-requests
 
-
 case class GithubRepository(owner: String, name: String)
+
+case class RepositoryData(name: String, owner: String, issues: List[JsValue])
 
 object GithubActor {
 
@@ -32,7 +34,10 @@ class GithubActor extends Actor {
 
   import play.api.Play.current
 
-  val redisActor = Akka.system.actorOf(Props[RedisActor])
+  var g1Calculator = Akka.system.actorOf(Props[G1Actor])
+  var g2Calculator = Akka.system.actorOf(Props[G2Actor])
+  var g3Calculator = Akka.system.actorOf(Props[G3Actor])
+  var g4Calculator = Akka.system.actorOf(Props[G4Actor])
 
   val repoName = new StringBuffer()
   val repoOwner = new StringBuffer()
@@ -41,8 +46,8 @@ class GithubActor extends Actor {
 
   override def receive: Receive = {
 
-    case repo: GithubRepository => {
-      Logger.debug(s"GithubActor | Next Repo : ${repo.owner}/${repo.name}")
+    case repo: GithubRepository =>
+      Logger.debug(s"${this.getClass} | Next Repo : ${repo.owner}/${repo.name}")
 
       repoName append repo.name
       repoOwner append repo.owner
@@ -52,10 +57,9 @@ class GithubActor extends Actor {
         response =>
           handleGithubResponse(response)
       }
-    }
 
-    case link: String => {
-      Logger.debug(s"GithubActor | Next call : $link")
+    case link: String =>
+      Logger.debug(s"${this.getClass} | Next call : $link")
 
       WS.url(link)
         .withQueryString(
@@ -67,10 +71,9 @@ class GithubActor extends Actor {
         response =>
           handleGithubResponse(response)
       }
-    }
 
     case error: Exception =>
-      Logger.error(s"GithubActor | ERROR : ${error.getMessage}")
+      Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
       throw error
   }
 
@@ -117,7 +120,11 @@ class GithubActor extends Actor {
       case nextLink: Some[String] =>
         self ! nextLink.get
       case _ =>
-        redisActor ! RedisRepository(repoName.toString, repoOwner.toString, issues.toList)
+        val data = RepositoryData(repoName.toString, repoOwner.toString, issues.toList)
+        g1Calculator ! data
+        g2Calculator ! data
+        g3Calculator ! data
+        g4Calculator ! data
         self ! PoisonPill
     }
   }
@@ -131,7 +138,7 @@ class GithubActor extends Actor {
    * @param response
    */
   private def handleGithubErrorResponse(response: Response) = {
-    Logger.debug(s"GithubActor | Erreur Github : ${response.json \ "message"}")
+    Logger.error(s"${this.getClass} | Erreur Github : ${response.json \ "message"}")
   }
 
   /**
