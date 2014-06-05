@@ -1,21 +1,21 @@
 package actors.compute
 
 import akka.actor.Actor
-import actors.{RepositoryData, Redisable}
+import actors.{ParsedRepositoryData, Redisable}
 import play.api.Logger
 
 
 class G3Actor extends Actor with Redisable {
 
-   override def receive: Receive = {
+  override def receive: Receive = {
 
-     case data: RepositoryData => {
+    case data: ParsedRepositoryData => {
 
-     }
+    }
 
-     case error: Exception =>
-       Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
-       throw error
-   }
+    case error: Exception =>
+      Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
+      throw error
+  }
 
- }
+}

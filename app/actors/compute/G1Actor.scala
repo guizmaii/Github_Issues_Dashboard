@@ -1,7 +1,7 @@
 package actors.compute
 
 import akka.actor.Actor
-import actors.{RepositoryData, Redisable}
+import actors.{ParsedRepositoryData, Redisable}
 import play.api.Logger
 
 
@@ -9,7 +9,7 @@ class G1Actor extends Actor with Redisable {
 
   override def receive: Receive = {
 
-    case data: RepositoryData => {
+    case data: ParsedRepositoryData => {
 
     }
 

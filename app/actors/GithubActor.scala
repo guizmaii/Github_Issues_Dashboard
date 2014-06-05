@@ -10,7 +10,6 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, JsArray}
 import play.api.libs.concurrent.Akka
 import scala.collection.mutable.ListBuffer
-import actors.compute.{G4Actor, G3Actor, G2Actor, G1Actor}
 
 // TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
 // TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/

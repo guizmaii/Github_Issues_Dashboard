@@ -4,6 +4,9 @@ import play.api.Logger
 import akka.actor.{Props, Actor}
 import play.api.libs.concurrent.Akka
 import actors.compute.{G4Actor, G3Actor, G2Actor, G1Actor}
+import domain.GithubIssue
+
+case class ParsedRepositoryData(repoName: String, repoOwner: String, computedData: List[GithubIssue])
 
 class IssueParserActor extends Actor {
 
