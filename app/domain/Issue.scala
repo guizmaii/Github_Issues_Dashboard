@@ -1,5 +1,7 @@
 package domain
 
+import org.joda.time.DateTime
+
 case class GithubIssue(url: String,
                        labels_url: String,
                        comments_url: String,
@@ -19,6 +21,12 @@ case class GithubIssue(url: String,
                        closed_at: String,
                        created_at: String,
                        updated_at: String)
+{
+  def isNotClosed: Boolean = closed_at.isEmpty
+  def isCreatedBefore(date: DateTime): Boolean = DateTime.parse(created_at).isBefore(date)
+  def isClosedAfter(date: DateTime): Boolean = DateTime.parse(closed_at).isAfter(date)
+  def isOpenAtThisDate(date: DateTime): Boolean = isCreatedBefore(date) && (isNotClosed || isClosedAfter(date))
+}
 
 case class GithubUser(login: String,
                       id: Int,

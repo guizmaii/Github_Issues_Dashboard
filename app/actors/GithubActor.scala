@@ -17,7 +17,7 @@ import scala.collection.mutable.ListBuffer
 
 case class GithubRepository(owner: String, name: String)
 
-case class RepositoryData(name: String, owner: String, issues: List[JsValue])
+case class RepositoryData(repo: GithubRepository, issues: List[JsValue])
 
 object GithubActor {
 
@@ -35,8 +35,8 @@ class GithubActor extends Actor {
 
   var parserActor = Akka.system.actorOf(Props[IssueParserActor])
 
-  val repoName = new StringBuffer()
-  val repoOwner = new StringBuffer()
+  // TODO : Trouver comment ne pas donner cette valeur par défault.
+  var repository = GithubRepository("", "")
 
   val issues = new ListBuffer[JsValue]()
 
@@ -45,8 +45,7 @@ class GithubActor extends Actor {
     case repo: GithubRepository =>
       Logger.debug(s"${this.getClass} | Next Repo : ${repo.owner}/${repo.name}")
 
-      repoName append repo.name
-      repoOwner append repo.owner
+      this.repository = repo
 
       getIssues(repo.owner, repo.name)
         .map {
@@ -118,7 +117,7 @@ class GithubActor extends Actor {
       case nextLink: Some[String] =>
         self ! nextLink.get
       case _ =>
-        parserActor ! RepositoryData(repoName.toString, repoOwner.toString, issues.toList)
+        parserActor ! RepositoryData(repository, issues.toList)
         self ! PoisonPill
     }
   }

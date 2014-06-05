@@ -3,7 +3,7 @@ package actors
 import akka.actor.Actor
 import com.redis._
 import play.api.Logger
-import actors.compute.ComputedRepositoryData
+import actors.compute.G1ComputedData
 
 object RedisActor {
 
@@ -23,16 +23,16 @@ class RedisActor extends Actor {
   override def receive: Receive = {
 
     // TODO : Coder & Tester la récupération des données
-    case data: ComputedRepositoryData =>
-      Logger.debug(s"${this.getClass} | Repo reçu pour sauvegarde : ${data.repoOwner}/${data.repoName}")
+    case g1Data: G1ComputedData =>
+      Logger.debug(s"${this.getClass} | Repo reçu pour sauvegarde : ${g1Data.repo.owner}/${g1Data.repo.name}")
 
       RedisActor.clients.withClient {
         client => {
-          val key = s"${data.repoOwner}:${data.repoName}:${data.graph}"
+          val key = s"${g1Data.repo.owner}:${g1Data.repo.name}:${g1Data.graphType}"
 
           client.del(key)
 
-          client.hset(RedisActor.MASTER_KEY, key, data.computedData)
+          client.hset(RedisActor.MASTER_KEY, key, g1Data.computedData)
 
           // TODO : To delete
           Logger.debug(s"${this.getClass} | N° of key inserted in $key : ${client.hgetall(RedisActor.MASTER_KEY).get.size}")

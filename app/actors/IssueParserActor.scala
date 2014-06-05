@@ -11,11 +11,18 @@ import scala.collection.mutable.ListBuffer
 import play.api.libs.json._// JSON library
 import play.api.libs.functional.syntax._ // Combinator syntax
 
-case class ParsedRepositoryData(repoName: String, repoOwner: String, computedData: List[GithubIssue])
+case class ParsedRepositoryData(repo: GithubRepository, parsedData: List[GithubIssue])
 
 // TODO : Faire une librairie externe pour tout ce qui concerne Github et qui peut s'avérer réutilisable
 
 object IssueParserActor {
+
+  import play.api.Play.current
+
+  var g1Calculator = Akka.system.actorOf(Props[G1Actor])
+  var g2Calculator = Akka.system.actorOf(Props[G2Actor])
+  var g3Calculator = Akka.system.actorOf(Props[G3Actor])
+  var g4Calculator = Akka.system.actorOf(Props[G4Actor])
 
   implicit val GithubIssueReads: Format[GithubIssue] = (
     (JsPath \ "url").format[String] and
@@ -90,19 +97,12 @@ object IssueParserActor {
 
 class IssueParserActor extends Actor {
 
-  import play.api.Play.current
-
-  var g1Calculator = Akka.system.actorOf(Props[G1Actor])
-  var g2Calculator = Akka.system.actorOf(Props[G2Actor])
-  var g3Calculator = Akka.system.actorOf(Props[G3Actor])
-  var g4Calculator = Akka.system.actorOf(Props[G4Actor])
-
   val issues = new ListBuffer[GithubIssue]()
 
   override def receive: Receive = {
 
-    case repo: RepositoryData =>
-      repo.issues map {
+    case data: RepositoryData =>
+      data.issues map {
         jsonIssue =>
           jsonIssue.validate[GithubIssue] match {
             case s: JsSuccess[GithubIssue] =>
@@ -111,11 +111,12 @@ class IssueParserActor extends Actor {
               Logger.error(s"${this.getClass} | ERROR : $e")
           }
       }
-      val parsedRepo = ParsedRepositoryData(repo.owner, repo.name, issues.toList)
-      g1Calculator ! parsedRepo
-      g2Calculator ! parsedRepo
-      g3Calculator ! parsedRepo
-      g4Calculator ! parsedRepo
+      val parsedRepo = ParsedRepositoryData(data.repo, issues.toList)
+      // TODO : Réfléchir : est-il mieux de ne créer que 4 acteurs de calculs ou 4 par dépot ?
+      IssueParserActor.g1Calculator ! parsedRepo
+      IssueParserActor.g2Calculator ! parsedRepo
+      IssueParserActor.g3Calculator ! parsedRepo
+      IssueParserActor.g4Calculator ! parsedRepo
       self ! PoisonPill
 
     case error: Exception =>
