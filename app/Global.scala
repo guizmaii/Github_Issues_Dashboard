@@ -1,4 +1,3 @@
-import actors.GithubRepository
 import actors.{GithubRepository, GithubActor}
 import akka.actor.Props
 import play.api._
