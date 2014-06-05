@@ -34,10 +34,7 @@ class GithubActor extends Actor {
 
   import play.api.Play.current
 
-  var g1Calculator = Akka.system.actorOf(Props[G1Actor])
-  var g2Calculator = Akka.system.actorOf(Props[G2Actor])
-  var g3Calculator = Akka.system.actorOf(Props[G3Actor])
-  var g4Calculator = Akka.system.actorOf(Props[G4Actor])
+  var parserActor = Akka.system.actorOf(Props[IssueParserActor])
 
   val repoName = new StringBuffer()
   val repoOwner = new StringBuffer()
@@ -120,11 +117,7 @@ class GithubActor extends Actor {
       case nextLink: Some[String] =>
         self ! nextLink.get
       case _ =>
-        val data = RepositoryData(repoName.toString, repoOwner.toString, issues.toList)
-        g1Calculator ! data
-        g2Calculator ! data
-        g3Calculator ! data
-        g4Calculator ! data
+        parserActor ! RepositoryData(repoName.toString, repoOwner.toString, issues.toList)
         self ! PoisonPill
     }
   }
