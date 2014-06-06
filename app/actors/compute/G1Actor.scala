@@ -1,33 +1,30 @@
 package actors.compute
 
 import akka.actor.{PoisonPill, Actor}
-import actors.{GithubRepository, ParsedRepositoryData, Redisable}
+import actors.{RepositoryData, GithubRepository, Redisable}
 import play.api.Logger
 import org.joda.time.DateTime
 import scala.collection.mutable
-import org.joda.time.format.DateTimeFormat
-import java.util.Locale
-import domain.{G1, GraphType, GithubIssue}
+import domain.{G1, GraphType}
+import play.api.libs.json.JsValue
 
 case class G1ComputedData(repo: GithubRepository, computedData: mutable.Map[String, Int], graphType: GraphType = G1)
 
 class G1Actor extends Actor with Redisable {
 
-  val fmt = DateTimeFormat.forPattern("yyyyMMdd")
-  val frenchFmt = fmt.withLocale(Locale.FRENCH)
-
   val graphPoints = mutable.Map[String, Int]()
 
   override def receive: Receive = {
 
-    case parsedRepo: ParsedRepositoryData =>
-      parsedRepo.parsedData map {
+    case data: RepositoryData =>
+      data.issues map {
         issue =>
-          val createdDate = DateTime.parse(issue.created_at)
-          graphPoints(frenchFmt.print(createdDate)) = countOpenIssues(createdDate, parsedRepo.parsedData)
+          val createdDate = (issue \ "created_at").as[String]
+          val parsedCreatedDate = DateTime.parse(createdDate)
+          graphPoints(createdDate) = data.issues.count(isOpenAtThisDate(_, parsedCreatedDate))
       }
-      redisActor ! G1ComputedData(parsedRepo.repo, graphPoints)
-      // TODO : Réfléchir : Ici, pas de PoisonPil car c'est un singleton qui fera les calculs pour tous les dépots. Voir l'acteur parseur.
+      redisActor ! G1ComputedData(data.repo, graphPoints)
+      self ! PoisonPill
 
     case error: Exception =>
       Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
@@ -36,22 +33,26 @@ class G1Actor extends Actor with Redisable {
       throw error
   }
 
-  /**
-   * Retourne le nombre d'issues ouverte à une date donnée.
-   *
-   * @param date: la date donnée
-   * @param issues: l'ensemble des issues à analyser
-   * @return
-   */
-  private def countOpenIssues(date: DateTime, issues: List[GithubIssue]): Int = {
-    var cpt = 0
-    issues map {
-      issue =>
-      if (issue.isOpenAtThisDate(date)) {
-        cpt += 1
-      }
+  // TODO : Validate
+  private def isCreatedBefore(issue: JsValue, creationDate: DateTime): Boolean = {
+    DateTime.parse((issue \ "created_at").as[String]).isBefore(creationDate)
+  }
+
+  // TODO : Validate
+  private def isClosedAfter(issue: JsValue, creationDate: DateTime): Boolean = {
+    (issue \ "closed_at").asOpt[String] match {
+      case closedDate: Some[String] =>
+        DateTime.parse(closedDate.get).isAfter(creationDate)
+      case None =>
+        // Si l'issue n'est pas closed alors
+        // elle sera forcément fermé après la "creationDate"
+        true
     }
-    cpt
+  }
+
+  // TODO : Validate
+  private def isOpenAtThisDate(issue: JsValue, creationDate: DateTime): Boolean = {
+    isCreatedBefore(issue, creationDate) && isClosedAfter(issue, creationDate)
   }
 
 }

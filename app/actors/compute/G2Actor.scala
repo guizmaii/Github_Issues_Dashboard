@@ -1,7 +1,7 @@
 package actors.compute
 
 import akka.actor.{PoisonPill, Actor}
-import actors.{ParsedRepositoryData, Redisable}
+import actors.{RepositoryData, Redisable}
 import play.api.Logger
 
 
@@ -9,7 +9,7 @@ class G2Actor extends Actor with Redisable {
 
   override def receive: Receive = {
 
-    case data: ParsedRepositoryData => {
+    case data: RepositoryData => {
 
     }
 
