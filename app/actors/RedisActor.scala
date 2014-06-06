@@ -24,14 +24,13 @@ class RedisActor extends Actor {
 
     // TODO : Coder & Tester la récupération des données
     case g1Data: G1ComputedData =>
-      Logger.debug(s"${this.getClass} | Repo reçu pour sauvegarde : ${g1Data.repo.owner}/${g1Data.repo.name}")
+      val key = s"${g1Data.repo.owner}:${g1Data.repo.name}:${g1Data.graphType}"
+
+      Logger.debug(s"${this.getClass} | Repo reçu pour sauvegarde : $key")
 
       RedisActor.clients.withClient {
         client => {
-          val key = s"${g1Data.repo.owner}:${g1Data.repo.name}:${g1Data.graphType}"
-
           client.del(key)
-
           client.hset(RedisActor.MASTER_KEY, key, g1Data.computedData)
 
           // TODO : To delete
