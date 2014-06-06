@@ -29,6 +29,7 @@ class IssueParserActor extends Actor {
 
   override def receive: Receive = {
 
+    // TODO FIX!! : Le parsage n'a pas l'air de fonctionner !
     case data: RepositoryData =>
       data.issues map {
         jsonIssue =>
