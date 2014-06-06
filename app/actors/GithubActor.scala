@@ -7,7 +7,7 @@ import play.api.libs.ws.{WS, Response}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.mutable
 import play.api.Logger
-import play.api.libs.json.{JsValue, JsArray}
+import play.api.libs.json.{JsObject, JsArray}
 import play.api.libs.concurrent.Akka
 import scala.collection.mutable.ListBuffer
 import actors.compute.G1Actor
@@ -18,7 +18,7 @@ import actors.compute.G1Actor
 
 case class GithubRepository(owner: String, name: String)
 
-case class RepositoryData(repo: GithubRepository, issues: ListBuffer[JsValue])
+case class RepositoryData(repo: GithubRepository, issues: ListBuffer[JsObject])
 
 object GithubActor {
 
@@ -39,7 +39,7 @@ class GithubActor extends Actor {
   // TODO : Trouver comment ne pas donner cette valeur par défault.
   var repository = GithubRepository("", "")
 
-  val issues = new ListBuffer[JsValue]()
+  val issues = new ListBuffer[JsObject]()
 
   override def receive: Receive = {
 
@@ -112,7 +112,7 @@ class GithubActor extends Actor {
    * @param response
    */
   private def handleGithubOkResponse(response: Response) {
-    issues ++= response.json.asInstanceOf[JsArray].value
+    issues ++= response.json.asInstanceOf[JsArray].value.asInstanceOf[Seq[JsObject]]
 
     response.header("Link") match {
       case linkHeader: Some[String] =>

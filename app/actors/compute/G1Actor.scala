@@ -6,7 +6,9 @@ import play.api.Logger
 import org.joda.time.DateTime
 import scala.collection.mutable
 import domain.{G1, GraphType}
-import play.api.libs.json.JsValue
+
+import play.api.libs.json._ // JSON library
+import play.api.libs.json.Reads._ // Custom validation helpers
 
 case class G1ComputedData(repo: GithubRepository, computedData: mutable.Map[String, Int], graphType: GraphType = G1)
 
@@ -33,26 +35,28 @@ class G1Actor extends Actor with Redisable {
       throw error
   }
 
-  // TODO : Validate
-  private def isCreatedBefore(issue: JsValue, creationDate: DateTime): Boolean = {
-    DateTime.parse((issue \ "created_at").as[String]).isBefore(creationDate)
+  private def isCreatedBeforeOrInSameTime(issue: JsObject, creationDate: DateTime): Boolean = {
+    val createdAt = DateTime.parse((issue \ "created_at").asInstanceOf[JsString].value)
+    createdAt.isBefore(creationDate) || createdAt.isEqual(creationDate)
   }
 
-  // TODO : Validate
-  private def isClosedAfter(issue: JsValue, creationDate: DateTime): Boolean = {
-    (issue \ "closed_at").asOpt[String] match {
-      case closedDate: Some[String] =>
-        DateTime.parse(closedDate.get).isAfter(creationDate)
-      case None =>
+  private def isClosedAfter(issue: JsObject, creationDate: DateTime): Boolean = {
+    issue \ "closed_at" match {
+      case closedDate: JsString =>
+        DateTime.parse(closedDate.value).isAfter(creationDate)
+      case JsNull =>
         // Si l'issue n'est pas closed alors
         // elle sera forcément fermé après la "creationDate"
         true
+      case otherType =>
+        Logger.error(s"${this.getClass} | ERROR : \"closed_at\" received : $otherType")
+        false
     }
   }
 
   // TODO : Validate
-  private def isOpenAtThisDate(issue: JsValue, creationDate: DateTime): Boolean = {
-    isCreatedBefore(issue, creationDate) && isClosedAfter(issue, creationDate)
+  private def isOpenAtThisDate(issue: JsObject, creationDate: DateTime): Boolean = {
+    isCreatedBeforeOrInSameTime(issue, creationDate) && isClosedAfter(issue, creationDate)
   }
 
 }
