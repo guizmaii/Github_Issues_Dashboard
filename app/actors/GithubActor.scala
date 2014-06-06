@@ -17,7 +17,7 @@ import scala.collection.mutable.ListBuffer
 
 case class GithubRepository(owner: String, name: String)
 
-case class RepositoryData(repo: GithubRepository, issues: List[JsValue])
+case class RepositoryData(repo: GithubRepository, issues: ListBuffer[JsValue])
 
 object GithubActor {
 
@@ -113,14 +113,24 @@ class GithubActor extends Actor {
   private def handleGithubOkResponse(response: Response) {
     issues ++= response.json.asInstanceOf[JsArray].value
 
-    parseLinkHeader(response.header("Link").get).get("next") match {
-      case nextLink: Some[String] =>
-        self ! nextLink.get
-      case _ =>
-        parserActor ! RepositoryData(repository, issues.toList)
-        self ! PoisonPill
+    response.header("Link") match {
+      case linkHeader: Some[String] =>
+        parseLinkHeader(linkHeader.get).get("next") match {
+          case nextLink: Some[String] =>
+            self ! nextLink.get
+          case _ =>
+            sendDataAndDie()
+        }
+      case None =>
+        sendDataAndDie()
     }
   }
+
+  private def sendDataAndDie(): Unit = {
+    parserActor ! RepositoryData(repository, issues)
+    self ! PoisonPill
+  }
+
 
   // TODO : Améliorer la gestion des réponses non 200
   /**
