@@ -4,27 +4,32 @@ import akka.actor.{PoisonPill, Actor}
 import actors.{RepositoryData, GithubRepository, Redisable}
 import play.api.Logger
 import org.joda.time.DateTime
-import scala.collection.mutable
 import domain.{G1, GraphType}
 
-import play.api.libs.json._ // JSON library
+import play.api.libs.json._
+
 import play.api.libs.json.Reads._ // Custom validation helpers
 
-case class G1ComputedData(repo: GithubRepository, computedData: mutable.Map[String, Int], graphType: GraphType = G1)
+case class G1ComputedData(repo: GithubRepository, computedData: java.util.TreeMap[String, Int], graphType: GraphType = G1)
 
 class G1Actor extends Actor with Redisable {
 
-  val graphPoints = mutable.Map[String, Int]()
+  val graphPoints = new java.util.TreeMap[String, Int]()
 
   override def receive: Receive = {
 
     case data: RepositoryData =>
+      val before = System.currentTimeMillis()
       data.issues map {
         issue =>
           val createdDate = (issue \ "created_at").as[String]
           val parsedCreatedDate = DateTime.parse(createdDate)
-          graphPoints(createdDate) = data.issues.count(isOpenAtThisDate(_, parsedCreatedDate))
+          graphPoints.put(createdDate, data.issues.count(isOpenAtThisDate(_, parsedCreatedDate)))
       }
+      val after = System.currentTimeMillis()
+
+      Logger.debug("time : " + ((after - before) / 1000) + " secondes")
+
       redisActor ! G1ComputedData(data.repo, graphPoints)
       self ! PoisonPill
 
@@ -49,7 +54,7 @@ class G1Actor extends Actor with Redisable {
         // elle sera forcément fermé après la "creationDate"
         true
       case otherType =>
-        Logger.error(s"${this.getClass} | ERROR : \"closed_at\" received : $otherType")
+        Logger.error(s"${this.getClass} | ERROR : 'closed_at' received : $otherType")
         false
     }
   }
