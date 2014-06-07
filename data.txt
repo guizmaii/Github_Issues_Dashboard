@@ -1,8 +1,0 @@
-rails issues = 15548
-(rails issues)² = 241 740 304
-rails pages = 15548 / 100 = 156
-durée du calcul avec une ListBuffer : 1212 secondes = 20.2 minutes
-durée du calcul avec une List       :
-
-rails issues / 10 = 1555
-(rails issues / 10) * (rails issues) = 24 177 140
