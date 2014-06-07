@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.{PoisonPill, Props, Actor}
+import akka.actor.{ActorRef, PoisonPill, Props, Actor}
 import scala.concurrent.Future
 import play.api.libs.ws.{WS, Response}
 
@@ -18,7 +18,7 @@ import actors.compute.G1Actor
 
 case class GithubRepository(owner: String, name: String)
 
-case class RepositoryData(repo: GithubRepository, issues: ListBuffer[JsObject])
+case class RepositoryData(repo: GithubRepository, issues: List[JsObject])
 
 object GithubActor {
 
@@ -34,11 +34,8 @@ class GithubActor extends Actor {
 
   import play.api.Play.current
 
-  var g1Calculator = Akka.system.actorOf(Props[G1Actor])
-
-  // TODO : Trouver comment ne pas donner cette valeur par défault.
-  var repository = GithubRepository("", "")
-
+  val g1Calculator: ActorRef = Akka.system.actorOf(Props[G1Actor])
+  var repository: GithubRepository = null
   val issues = new ListBuffer[JsObject]()
 
   override def receive: Receive = {
@@ -128,7 +125,7 @@ class GithubActor extends Actor {
   }
 
   private def sendDataAndDie(): Unit = {
-    g1Calculator ! RepositoryData(repository, issues)
+    g1Calculator ! RepositoryData(repository, issues.toList)
     self ! PoisonPill
   }
 

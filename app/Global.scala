@@ -1,3 +1,4 @@
+import actors.GithubRepository
 import actors.{GithubRepository, GithubActor}
 import akka.actor.Props
 import play.api._
@@ -18,7 +19,8 @@ object Global extends GlobalSettings {
 //    )
 
     val repos = List(
-      GithubRepository("jessepollak", "card")
+      GithubRepository("rails", "rails")
+//      GithubRepository("guizmaii", "Github_Issues_Dashboard")
     )
 
     repos map {
