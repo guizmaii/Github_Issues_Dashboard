@@ -3,7 +3,7 @@ package actors
 import akka.actor.Actor
 import com.redis._
 import play.api.Logger
-import actors.compute.G1ComputedData
+import actors.compute.G1.G1ComputedData
 
 object RedisActor {
 

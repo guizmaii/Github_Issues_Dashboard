@@ -1,4 +1,4 @@
-package actors.compute
+package actors.compute.G2
 
 import akka.actor.{PoisonPill, Actor}
 import actors.{RepositoryData, Redisable}

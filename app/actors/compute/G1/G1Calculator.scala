@@ -1,4 +1,4 @@
-package actors.compute
+package actors.compute.G1
 
 import akka.actor.Actor
 import org.joda.time.DateTime
