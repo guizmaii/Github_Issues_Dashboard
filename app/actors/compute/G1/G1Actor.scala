@@ -40,8 +40,8 @@ class G1Actor extends Actor with Redisable {
       workers = groupedIssuesIterator.length
       groupedIssuesIterator map ( Akka.system.actorOf(Props[G1Calculator]) ! G1Data(_,  data.issues) )
 
-    case graphPointsChunk: java.util.TreeMap[String, Int] =>
-      this.graphPoints.putAll(graphPointsChunk)
+    case calculatedGraphPoints: java.util.TreeMap[String, Int] =>
+      this.graphPoints.putAll(calculatedGraphPoints)
       workers -= 1
       if (workers == 0) {
         end = System.currentTimeMillis()
