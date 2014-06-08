@@ -23,11 +23,7 @@ object Global extends GlobalSettings {
 //      GithubRepository("guizmaii", "Github_Issues_Dashboard")
     )
 
-    repos map {
-     repo =>
-       Akka.system.actorOf(Props[GithubActor]) ! repo
-    }
-
+    repos map { Akka.system.actorOf(Props[GithubActor]) ! _ }
   }
 
 
