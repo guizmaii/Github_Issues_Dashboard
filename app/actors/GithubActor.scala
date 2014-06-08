@@ -1,16 +1,19 @@
 package actors
 
-import akka.actor.{ActorRef, PoisonPill, Props, Actor}
+import akka.actor._
 import scala.concurrent.Future
-import play.api.libs.ws.{WS, Response}
+import play.api.libs.ws.WS
 
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.mutable
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsArray}
 import play.api.libs.concurrent.Akka
 import scala.collection.mutable.ListBuffer
 import actors.compute.G1.G1Actor
+import play.api.libs.json.JsArray
+import play.api.libs.ws.Response
+import scala.Some
+import play.api.libs.json.JsObject
 
 // TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
 // TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/
@@ -65,11 +68,6 @@ class GithubActor extends Actor {
           handleGithubResponse(response)
       }
 
-    case error: Exception =>
-      Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
-      // TODO : Valider l'utiliter de s'envoyer une PoisonPill
-      self ! PoisonPill
-      throw error
   }
 
   /**
