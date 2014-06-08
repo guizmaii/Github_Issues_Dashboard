@@ -1,13 +1,11 @@
 package actors.compute
 
-import akka.actor.{Props, PoisonPill, Actor}
+import akka.actor.{Props, Actor}
 import actors.{GithubRepository, Redisable}
 import play.api.Logger
-import org.joda.time.DateTime
 import domain.{G1, GraphType}
 
 import play.api.libs.json._
-import scala.collection.mutable.ListBuffer
 import actors.RepositoryData
 import play.api.libs.concurrent.Akka
 
@@ -40,16 +38,7 @@ class G1Actor extends Actor with Redisable {
 
       val groupedIssuesIterator = data.issues.grouped(G1Actor.CHUNK_SIZE).toList
       workers = groupedIssuesIterator.length
-      groupedIssuesIterator map ( Akka.system.actorOf(Props[G1Actor]) ! G1Data(_,  data.issues) )
-
-    case data: G1Data =>
-      val lighterList = getLighterList(data.issuesChunk)
-      lighterList map {
-        tuple =>
-          val parsedCreatedDate = DateTime.parse(tuple._1)
-          graphPoints.put(tuple._1, lighterList.count(isOpenAtThisDate(_, parsedCreatedDate)))
-      }
-      sender ! graphPoints
+      groupedIssuesIterator map ( Akka.system.actorOf(Props[G1Calculator]) ! G1Data(_,  data.issues) )
 
     case graphPointsChunk: java.util.TreeMap[String, Int] =>
       this.graphPoints.putAll(graphPointsChunk)
@@ -61,45 +50,6 @@ class G1Actor extends Actor with Redisable {
         redisActor ! G1ComputedData(repo, graphPoints)
       }
 
-    case error: Exception =>
-      Logger.error(s"${this.getClass} | ERROR : ${error.getMessage}")
-      // TODO : Valider l'utiliter de s'envoyer une PoisonPill
-      self ! PoisonPill
-      throw error
-  }
-
-  private def getLighterList(issues: List[JsObject]): ListBuffer[(String, String)] = {
-    val lightIssueList = new ListBuffer[(String, String)]()
-    issues map {
-      issue =>
-        val created_at = (issue \ "created_at").asInstanceOf[JsString].value
-        val closed_at = issue \ "closed_at" match {
-          case json: JsString => json.value
-          case JsNull => null
-        }
-        lightIssueList += (created_at -> closed_at)
-    }
-    lightIssueList
-  }
-
-  private def isCreatedBeforeOrInSameTime(created_at: String, creationDate: DateTime): Boolean = {
-    val createdAt = DateTime.parse(created_at)
-    createdAt.isBefore(creationDate) || createdAt.isEqual(creationDate)
-  }
-
-  private def isClosedAfter(closed_at: String, creationDate: DateTime): Boolean = {
-    closed_at match {
-      case value: String =>
-        DateTime.parse(value).isAfter(creationDate)
-      case null =>
-        // Si l'issue n'est pas closed alors
-        // elle sera forcément fermé après la "creationDate"
-        true
-    }
-  }
-
-  private def isOpenAtThisDate(tuple: (String, String), creationDate: DateTime): Boolean = {
-    isCreatedBeforeOrInSameTime(tuple._1, creationDate) && isClosedAfter(tuple._2, creationDate)
   }
 
 }
