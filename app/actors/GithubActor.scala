@@ -55,8 +55,6 @@ class GithubActor extends Actor {
       }
 
     case link: String =>
-      Logger.debug(s"${this.getClass} | Next call : $link")
-
       WS.url(link)
         .withQueryString(
           "client_id" -> GithubActor.client_id,

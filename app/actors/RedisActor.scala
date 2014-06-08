@@ -32,9 +32,6 @@ class RedisActor extends Actor {
         client => {
           client.del(key)
           client.hset(RedisActor.MASTER_KEY, key, g1Data.computedData)
-
-          // TODO : To delete
-          Logger.debug(s"${this.getClass} | N° of key inserted in $key : ${client.hgetall(RedisActor.MASTER_KEY).get.size}")
         }
       }
 
