@@ -1,6 +1,7 @@
 package traits
 
 import com.redis.RedisClientPool
+import domain.GraphType
 
 trait SyncRedisable {
 
@@ -12,5 +13,9 @@ trait SyncRedisable {
   val clients = new RedisClientPool(host, port)
 
   val MASTER_KEY = "data"
+
+  def getRedisField(repoOwner: String, repoName: String, graphType: GraphType): String = {
+    s"$repoOwner::$repoName::$graphType"
+  }
 
 }

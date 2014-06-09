@@ -55,6 +55,8 @@ class GithubActor extends Actor {
       }
 
     case link: String =>
+      Logger.debug(s"${this.getClass} | Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
+
       WS.url(link)
         .withQueryString(
           "client_id" -> GithubActor.client_id,
@@ -93,7 +95,8 @@ class GithubActor extends Actor {
 
   private def handleGithubResponse(response: Response) {
     response.status match {
-      case 200 => handleGithubOkResponse(response)
+      case 200 =>
+        handleGithubOkResponse(response)
       case _ =>
         handleGithubErrorResponse(response)
         self ! PoisonPill

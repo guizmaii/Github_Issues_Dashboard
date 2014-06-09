@@ -6,10 +6,10 @@ package domain
  */
 sealed abstract class GraphType(value: String)
 
-case object G1 extends GraphType("g1")
-case object G2 extends GraphType("g2")
-case object G3 extends GraphType("g3")
-case object G4 extends GraphType("g4")
+case object G1Type extends GraphType("g1")
+case object G2Type extends GraphType("g2")
+case object G3Type extends GraphType("g3")
+case object G4Type extends GraphType("g4")
 
 
 

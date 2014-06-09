@@ -3,14 +3,15 @@ package actors.compute.G1
 import akka.actor.{Props, Actor}
 import actors.GithubRepository
 import play.api.Logger
-import domain.{G1, GraphType}
+import domain.{G1Type, GraphType}
 
 import play.api.libs.json._
 import actors.RepositoryData
 import play.api.libs.concurrent.Akka
 import traits.AsyncRedisable
+import scala.collection.mutable
 
-case class G1ComputedData(repo: GithubRepository, computedData: java.util.TreeMap[String, Int], graphType: GraphType = G1)
+case class G1ComputedData(repo: GithubRepository, computedData: mutable.Map[String, Int], graphType: GraphType = G1Type)
 
 private case class G1Data(issuesChunk: List[JsObject], issues: List[JsObject])
 
@@ -22,7 +23,7 @@ class G1Actor extends Actor with AsyncRedisable {
 
   import play.api.Play.current
 
-  val graphPoints = new java.util.TreeMap[String, Int]()
+  val graphPoints = mutable.Map[String, Int]()
   var repo: GithubRepository = null
 
   var begin = 0L
@@ -41,8 +42,8 @@ class G1Actor extends Actor with AsyncRedisable {
       workers = groupedIssuesIterator.length
       groupedIssuesIterator map ( Akka.system.actorOf(Props[G1Calculator]) ! G1Data(_,  data.issues) )
 
-    case calculatedGraphPoints: java.util.TreeMap[String, Int] =>
-      this.graphPoints.putAll(calculatedGraphPoints)
+    case calculatedGraphPoints: mutable.Map[String, Int] =>
+      this.graphPoints ++= calculatedGraphPoints
       workers -= 1
       if (workers == 0) {
         end = System.currentTimeMillis()

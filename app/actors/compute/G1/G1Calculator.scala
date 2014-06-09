@@ -4,10 +4,11 @@ import akka.actor.Actor
 import org.joda.time.DateTime
 import play.api.libs.json.{JsNull, JsString, JsObject}
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 
 class G1Calculator extends Actor {
 
-  val calculatedGraphPoints = new java.util.TreeMap[String, Int]()
+  val calculatedGraphPoints = mutable.Map[String, Int]()
 
   override def receive: Receive = {
 
@@ -16,7 +17,7 @@ class G1Calculator extends Actor {
       lighterList map {
         tuple =>
           val parsedCreatedDate = DateTime.parse(tuple._1)
-          calculatedGraphPoints.put(tuple._1, lighterList.count(isOpenAtThisDate(_, parsedCreatedDate)))
+          calculatedGraphPoints += tuple._1 -> lighterList.count(isOpenAtThisDate(_, parsedCreatedDate))
       }
       sender ! calculatedGraphPoints
       
