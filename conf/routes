@@ -5,9 +5,21 @@
 # Home page
 GET        /                                 controllers.Application.index
 
+# G1
+GET        /G1                               controllers.G1Graphs.getAll
+
+# G2
+GET        /G2                               controllers.G2Graphs.getAll
+
+# G3
+GET        /G3                               controllers.G3Graphs.getAll
+
+# G4
+GET        /G4                               controllers.G4Graphs.getAll
+
+
 # Javascript routing
 GET        /assets/javascripts/routes        controllers.Application.javascriptRoutes
-
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file                     controllers.Assets.at(path="/public", file)
