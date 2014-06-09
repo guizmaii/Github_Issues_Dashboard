@@ -1,8 +1,9 @@
 package controllers
 
 import play.api.mvc.Controller
+import traits.SyncRedisable
 
-object G2Graphs extends Controller {
+object G2Graphs extends Controller with SyncRedisable {
 
   def getAll = ???
 

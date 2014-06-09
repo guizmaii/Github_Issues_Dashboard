@@ -1,24 +1,11 @@
 package actors
 
 import akka.actor.Actor
-import com.redis._
 import play.api.Logger
 import actors.compute.G1.G1ComputedData
+import traits.SyncRedisable
 
-object RedisActor {
-
-  import play.api.Play
-
-  val host: String = Play.current.configuration.getString("redis.host").get
-  val port: Int = Integer.parseInt(Play.current.configuration.getString("redis.port").get)
-
-  val clients = new RedisClientPool(host, port)
-
-  val MASTER_KEY = "data"
-
-}
-
-class RedisActor extends Actor {
+class RedisActor extends Actor with SyncRedisable {
 
   override def receive: Receive = {
 
@@ -28,10 +15,10 @@ class RedisActor extends Actor {
 
       Logger.debug(s"${this.getClass} | Repo reçu pour sauvegarde : $key")
 
-      RedisActor.clients.withClient {
+      clients.withClient {
         client => {
           client.del(key)
-          client.hset(RedisActor.MASTER_KEY, key, g1Data.computedData)
+          client.hset(MASTER_KEY, key, g1Data.computedData)
         }
       }
 

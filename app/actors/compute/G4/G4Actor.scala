@@ -1,11 +1,11 @@
 package actors.compute.G4
 
-import akka.actor.{PoisonPill, Actor}
-import actors.{RepositoryData, Redisable}
-import play.api.Logger
+import akka.actor.Actor
+import actors.RepositoryData
+import traits.AsyncRedisable
 
 
-class G4Actor extends Actor with Redisable {
+class G4Actor extends Actor with AsyncRedisable {
 
   override def receive: Receive = {
 

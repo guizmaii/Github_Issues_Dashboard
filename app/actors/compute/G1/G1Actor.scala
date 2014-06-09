@@ -1,13 +1,14 @@
 package actors.compute.G1
 
 import akka.actor.{Props, Actor}
-import actors.{GithubRepository, Redisable}
+import actors.GithubRepository
 import play.api.Logger
 import domain.{G1, GraphType}
 
 import play.api.libs.json._
 import actors.RepositoryData
 import play.api.libs.concurrent.Akka
+import traits.AsyncRedisable
 
 case class G1ComputedData(repo: GithubRepository, computedData: java.util.TreeMap[String, Int], graphType: GraphType = G1)
 
@@ -17,7 +18,7 @@ object G1Actor {
   val CHUNK_SIZE = 1000
 }
 
-class G1Actor extends Actor with Redisable {
+class G1Actor extends Actor with AsyncRedisable {
 
   import play.api.Play.current
 
