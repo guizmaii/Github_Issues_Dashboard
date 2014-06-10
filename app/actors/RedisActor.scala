@@ -11,14 +11,13 @@ class RedisActor extends Actor with SyncRedisable {
 
     // TODO : Coder & Tester la récupération des données
     case g1Data: G1ComputedData =>
-      val key = getRedisField(g1Data.repo.owner, g1Data.repo.name, g1Data.graphType)
+      val key = getRedisKey(g1Data.repo.owner, g1Data.repo.name, g1Data.graphType)
 
       Logger.debug(s"${this.getClass} | Repo reçu pour sauvegarde : $key")
 
-      clients.withClient {
+      redisPool.withClient {
         client => {
-          client.hdel(MASTER_KEY, key)
-          client.hset(MASTER_KEY, key, g1Data.computedData)
+          client.hmset(key, g1Data.computedData.toIterable)
         }
       }
 

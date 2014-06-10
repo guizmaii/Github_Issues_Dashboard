@@ -12,9 +12,9 @@ object G1Graphs extends Controller with SyncRedisable {
   import com.redis.serialization.Parse.Implicits._
 
   def getAll = Action {
-    val data = clients.withClient {
+    val data = redisPool.withClient {
       client =>
-        client.hmget(MASTER_KEY, getRedisField("guizmaii", "Github_Issues_Dashboard", G1Type))
+        client.hgetall[String, Int](getRedisKey("guizmaii", "Github_Issues_Dashboard", G1Type))
     }
     Ok(Json.toJson(data.get))
   }
