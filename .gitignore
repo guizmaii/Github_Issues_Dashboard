@@ -15,3 +15,4 @@ dist
 /.settings
 conf/github.conf
 conf/redis/stdout
+conf/redis/dump.rdb
