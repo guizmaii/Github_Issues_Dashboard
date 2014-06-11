@@ -8,10 +8,10 @@ $(document).ready(function () {
             nv.addGraph(function () {
                 var chart = nv.models.stackedAreaChart()
                     .x(function (d) {
-                        return d[0]
+                        return d[0];
                     })
                     .y(function (d) {
-                        return d[1]
+                        return d[1];
                     })
                     .clipEdge(true)
                     .useInteractiveGuideline(true);
@@ -19,7 +19,7 @@ $(document).ready(function () {
                 chart.xAxis
                     .showMaxMin(false)
                     .tickFormat(function (d) {
-                        return d3.time.format('%x')(new Date(d))
+                        return d3.time.format('%x')(new Date(d));
                     });
 
                 chart.yAxis
