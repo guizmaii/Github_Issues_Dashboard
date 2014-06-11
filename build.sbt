@@ -10,6 +10,5 @@ libraryDependencies ++= Seq(
   jdbc,
   cache,
   ws,
-  "net.debasishg" %% "redisclient" % "2.13",
-  "org.scala-lang" %% "scala-pickling" % "0.8.0"
+  "net.debasishg" %% "redisclient" % "2.13"
 )
