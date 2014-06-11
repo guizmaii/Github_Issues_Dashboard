@@ -2,7 +2,7 @@ package actors
 
 import akka.actor._
 import scala.concurrent.Future
-import play.api.libs.ws.WS
+import play.api.libs.ws.{WSResponse, WS}
 
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.mutable
@@ -11,7 +11,6 @@ import play.api.libs.concurrent.Akka
 import scala.collection.mutable.ListBuffer
 import actors.compute.G1.G1Actor
 import play.api.libs.json.JsArray
-import play.api.libs.ws.Response
 import scala.Some
 import play.api.libs.json.JsObject
 
@@ -79,7 +78,7 @@ class GithubActor extends Actor {
    * @param repo
    * @return
    */
-  private def getIssues(owner: String, repo: String): Future[Response] = {
+  private def getIssues(owner: String, repo: String): Future[WSResponse] = {
     WS.url(GithubActor.githubApiUrl + s"/repos/$owner/$repo/issues")
       .withQueryString(
         "per_page" -> "100",
@@ -93,7 +92,7 @@ class GithubActor extends Actor {
       ).get()
   }
 
-  private def handleGithubResponse(response: Response) {
+  private def handleGithubResponse(response: WSResponse) {
     response.status match {
       case 200 =>
         handleGithubOkResponse(response)
@@ -107,7 +106,7 @@ class GithubActor extends Actor {
    *
    * @param response
    */
-  private def handleGithubOkResponse(response: Response) {
+  private def handleGithubOkResponse(response: WSResponse) {
     issues ++= response.json.asInstanceOf[JsArray].value.asInstanceOf[Seq[JsObject]]
 
     response.header("Link") match {
@@ -137,7 +136,7 @@ class GithubActor extends Actor {
    *
    * @param response
    */
-  private def handleGithubErrorResponse(response: Response) = {
+  private def handleGithubErrorResponse(response: WSResponse) = {
     Logger.error(s"${this.getClass} | Erreur Github : ${response.json \ "message"}")
   }
 
