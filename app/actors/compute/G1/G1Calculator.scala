@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 class G1Calculator extends Actor {
 
-  val calculatedGraphPoints = mutable.Map[String, Int]()
+  val calculatedGraphPoints = mutable.Map[Long, Int]()
 
   override def receive: Receive = {
 
@@ -17,7 +17,7 @@ class G1Calculator extends Actor {
       lighterList map {
         tuple =>
           val parsedCreatedDate = DateTime.parse(tuple._1)
-          calculatedGraphPoints += tuple._1 -> lighterList.count(isOpenAtThisDate(_, parsedCreatedDate))
+          calculatedGraphPoints += parsedCreatedDate.toDate.getTime -> lighterList.count(isOpenAtThisDate(_, parsedCreatedDate))
       }
       sender ! calculatedGraphPoints
       

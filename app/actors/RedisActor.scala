@@ -17,10 +17,9 @@ class RedisActor extends Actor with SyncRedisable {
 
       redisPool.withClient {
         client => {
-          client.hmset(key, g1Data.computedData.toIterable)
+          client.hmset(key, g1Data.computedData)
         }
       }
-
   }
 
 }

@@ -3,7 +3,7 @@ package controllers
 import play.api.mvc._
 import traits.SyncRedisable
 import domain.G1Type
-import play.api.libs.json.Json
+import play.api.libs.json._
 
 
 object G1Graphs extends Controller with SyncRedisable {
