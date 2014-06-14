@@ -20,7 +20,7 @@ object Global extends GlobalSettings {
     val repos = List(
 //      GithubRepository("scala", "scala")
 //      GithubRepository("rails", "rails")
-      GithubRepository("guizmaii", "Github_Issues_Dashboard")
+//      GithubRepository("guizmaii", "Github_Issues_Dashboard")
     )
 
     repos map { Akka.system.actorOf(Props[GithubActor]) ! _ }
