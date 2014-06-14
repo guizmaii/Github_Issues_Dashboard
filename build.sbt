@@ -1,15 +1,17 @@
-name := "GithubDashbord_Backend_Scala"
+name := """Github_Issues_Dashboard"""
 
 version := "1.0-SNAPSHOT"
+
+lazy val root = (project in file(".")).enablePlugins(PlayScala)
+
+scalaVersion := "2.11.1"
+
+resolvers += "spray" at "http://repo.spray.io/"
 
 libraryDependencies ++= Seq(
   jdbc,
   cache,
-  "com.typesafe.play" %% "play-slick" % "0.6.0.1",
-  "org.springframework.security" % "spring-security-crypto" % "3.2.3.RELEASE",
-  "com.typesafe.slick" %% "slick" % "2.0.1",
-  "net.debasishg" % "redisclient_2.10" % "2.13",
-  "com.h2database" % "h2" % "1.3.175" % "test"
+  ws,
+  "net.debasishg" %% "redisclient" % "2.13",
+  "io.spray" %%  "spray-json" % "1.2.6"
 )
-
-play.Project.playScalaSettings

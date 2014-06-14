@@ -1,60 +1,72 @@
 package actors
 
-import akka.actor.{Props, Actor}
+import akka.actor._
 import scala.concurrent.Future
-import play.api.libs.ws.{WS, Response}
+import play.api.libs.ws.{WSResponse, WS}
 
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.mutable
-import com.ning.http.client.Realm.AuthScheme
 import play.api.Logger
-import play.api.libs.json.Json
 import play.api.libs.concurrent.Akka
+import scala.collection.mutable.ListBuffer
+import actors.compute.G1.G1Actor
+import play.api.libs.json.JsArray
+import scala.Some
+import play.api.libs.json.JsObject
 
-case class Repository(owner: String, name: String)
+// TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
+// TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/
+// TODO 2 (maybe) : Utiliser les conditional request pour baisser le nombre de requests nécessaire : https://developer.github.com/v3/#conditional-requests
+
+case class GithubRepository(owner: String, name: String)
+
+case class RepositoryData(repo: GithubRepository, issues: List[JsObject])
 
 object GithubActor {
 
-  lazy val githubApiUrl = "https://api.github.com"
+  val githubApiUrl = "https://api.github.com"
 
   import play.api.Play
 
-  lazy val login = Play.current.configuration.getString("github.login").get
-  lazy val password = Play.current.configuration.getString("github.password").get
-
+  val client_id = Play.current.configuration.getString("github.client.id").get
+  val client_secret = Play.current.configuration.getString("github.client.secret").get
 }
 
 class GithubActor extends Actor {
 
-  val redisActor = Akka.system.actorOf(Props[RedisActor])
+  import play.api.Play.current
+
+  val g1Calculator: ActorRef = Akka.system.actorOf(Props[G1Actor])
+  var repository: GithubRepository = null
+  val issues = new ListBuffer[JsObject]()
 
   override def receive: Receive = {
-    case repo: Repository =>
-      Logger.debug("Next Repo : " + repo.owner + "/" + repo.name)
 
-      getIssues(repo.owner, repo.name) map {
+    case repo: GithubRepository =>
+      Logger.debug(s"${this.getClass} | Next Repo : ${repo.owner}/${repo.name}")
+
+      this.repository = repo
+
+      getIssues(repo.owner, repo.name)
+        .map {
         response =>
-
-          redisActor ! Json.parse(response.body)
-
-          parseLinkHeader(response.header("Link").get).get("next") match {
-            case nextLink: Some[String] => self ! nextLink.get
-          }
+          handleGithubResponse(response)
       }
+
     case link: String =>
-      Logger.debug("Next call : " + link)
+      Logger.debug(s"${this.getClass} | Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
 
-      WS.url(link).withAuth(GithubActor.login, GithubActor.password, AuthScheme.BASIC).get() map {
+      WS.url(link)
+        .withQueryString(
+          "client_id" -> GithubActor.client_id,
+          "client_secret" -> GithubActor.client_secret
+        )
+        .get()
+        .map {
         response =>
-
-          redisActor ! Json.parse(response.body)
-
-          parseLinkHeader(response.header("Link").get).get("next") match {
-            case nextLink: Some[String] => self ! nextLink.get
-          }
+          handleGithubResponse(response)
       }
-    case error =>
-      Logger.error("ERREUR : " + error)
+
   }
 
   /**
@@ -66,12 +78,66 @@ class GithubActor extends Actor {
    * @param repo
    * @return
    */
-  private def getIssues(owner: String, repo: String): Future[Response] = {
-    WS.url(GithubActor.githubApiUrl + s"/repos/$owner/$repo/issues").withQueryString(
-      "state" -> "all",
-      "sort" -> "created",
-      "direction" -> "asc"
-    ).withAuth(GithubActor.login, GithubActor.password, AuthScheme.BASIC).get()
+  private def getIssues(owner: String, repo: String): Future[WSResponse] = {
+    WS.url(GithubActor.githubApiUrl + s"/repos/$owner/$repo/issues")
+      .withQueryString(
+        "per_page" -> "100",
+        "state" -> "all",
+        "sort" -> "created",
+        "direction" -> "asc"
+      )
+      .withQueryString(
+        "client_id" -> GithubActor.client_id,
+        "client_secret" -> GithubActor.client_secret
+      ).get()
+  }
+
+  private def handleGithubResponse(response: WSResponse) {
+    response.status match {
+      case 200 =>
+        handleGithubOkResponse(response)
+      case _ =>
+        handleGithubErrorResponse(response)
+        self ! PoisonPill
+    }
+  }
+
+  /**
+   *
+   * @param response
+   */
+  private def handleGithubOkResponse(response: WSResponse) {
+    issues ++= response.json.asInstanceOf[JsArray].value.asInstanceOf[Seq[JsObject]]
+
+    response.header("Link") match {
+      case linkHeader: Some[String] =>
+        parseLinkHeader(linkHeader.get).get("next") match {
+          case nextLink: Some[String] =>
+            self ! nextLink.get
+          case _ =>
+            sendDataAndDie()
+        }
+      case None =>
+        sendDataAndDie()
+    }
+  }
+
+  private def sendDataAndDie(): Unit = {
+    g1Calculator ! RepositoryData(repository, issues.toList)
+    self ! PoisonPill
+  }
+
+
+  // TODO : Améliorer la gestion des réponses non 200
+  /**
+   * Documentation des erreurs de l'API Github :
+   *
+   * https://developer.github.com/v3/#client-errors
+   *
+   * @param response
+   */
+  private def handleGithubErrorResponse(response: WSResponse) = {
+    Logger.error(s"${this.getClass} | Erreur Github : ${response.json \ "message"}")
   }
 
   /**

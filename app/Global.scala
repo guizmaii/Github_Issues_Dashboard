@@ -1,8 +1,7 @@
-import actors.{Repository, GithubActor}
+import actors.{GithubRepository, GithubActor}
 import akka.actor.Props
 import play.api._
 import play.api.libs.concurrent.Akka
-import services.Issue
 
 object Global extends GlobalSettings {
 
@@ -11,11 +10,20 @@ object Global extends GlobalSettings {
 
     import play.api.Play.current
 
-    val githubActor = Akka.system.actorOf(Props[GithubActor])
+//    val repos = List(
+//      GithubRepository("junit-team", "junit"),
+//      GithubRepository("scala", "scala"),
+//      GithubRepository("rails", "rails"),
+//      GithubRepository("ruby", "ruby")
+//    )
 
-    githubActor ! Repository("junit-team", "junit")
-//    githubActor ! Repository("scala", "scala")
+    val repos = List(
+//      GithubRepository("scala", "scala")
+//      GithubRepository("rails", "rails")
+//      GithubRepository("guizmaii", "Github_Issues_Dashboard")
+    )
 
+    repos map { Akka.system.actorOf(Props[GithubActor]) ! _ }
   }
 
 

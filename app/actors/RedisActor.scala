@@ -1,28 +1,24 @@
 package actors
 
+import actors.compute.G1.G1ComputedData
 import akka.actor.Actor
-import com.redis._
-import play.api.libs.json.JsArray
 import play.api.Logger
+import traits.SyncRedisable
 
-object RedisActor {
-
-  lazy val host = "localhost"
-
-  lazy val port = 6379
-
-}
-
-class RedisActor extends Actor {
-
-  val client = new RedisClient(RedisActor.host, RedisActor.port)
+class RedisActor extends Actor with SyncRedisable {
 
   override def receive: Receive = {
-    case data: JsArray => {
 
-    }
+    case g1Data: G1ComputedData =>
+      val key = getRedisKey(g1Data.repo.owner, g1Data.repo.name, g1Data.graphType)
 
-    case error =>
-      Logger.error("ERREUR : " + error)
+      Logger.debug(s"${this.getClass} | Repo reçu pour sauvegarde : $key")
+
+      redisPool.withClient {
+        client => {
+          client.hmset(key, g1Data.computedData)
+        }
+      }
   }
+
 }
