@@ -1,22 +1,45 @@
 package controllers
 
-import play.api.mvc._
-import traits.SyncRedisable
 import domain.G1Type
 import play.api.libs.json._
+import play.api.mvc._
+import spray.json._
+import traits.SyncRedisable
 
+import scala.collection.immutable.TreeMap
+
+case class G1Json(key: String, values: Array[Array[Long]])
+
+object G1JsonProtocol extends DefaultJsonProtocol {
+  implicit val colorFormat = jsonFormat2(G1Json)
+}
 
 object G1Graphs extends Controller with SyncRedisable {
 
-  import com.redis.serialization._
   import com.redis.serialization.Parse.Implicits._
 
   def getAll = Action {
     val data = redisPool.withClient {
       client =>
-        client.hgetall[String, Int](getRedisKey("guizmaii", "Github_Issues_Dashboard", G1Type))
+        client.hgetall[Long, Int](getRedisKey("scala", "scala", G1Type))
     }
-    Ok(Json.toJson(data.get))
+
+    val sortedAndFormatedData = MapToArrayOfArrayOfLong(sortData(data.get))
+
+    import controllers.G1JsonProtocol._
+
+    Ok(Json.parse(List(G1Json("Github_Issues_Dashboard", sortedAndFormatedData)).toJson.compactPrint))
+  }
+
+  private def sortData(data: Map[Long, Int]): TreeMap[Long, Int] = {
+    TreeMap[Long, Int]().++( for(t <- data) yield t._1 -> t._2 )
+  }
+
+  private def MapToArrayOfArrayOfLong(data: Map[Long, Int]): Array[Array[Long]] = {
+    data.toArray map {
+      t =>
+        Array(t._1, t._2)
+    }
   }
 
 }
