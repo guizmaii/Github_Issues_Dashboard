@@ -1,0 +1,72 @@
+@(repos: List[DBRepo])(implicit repoForm: Form[RepoUrl], flash: Flash)
+
+@import helper._
+
+@import services.GithubRepositoryUrlService._
+
+@main("Github Dashboard - Add repository") {
+
+    <h1 class="page-header">Configuration</h1>
+
+    <div class="row">
+        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"></div>
+        <div class="col-xs-10 col-sm-10 col-md-10 col-lg-10">
+
+            @flash.get("failure").map { message =>
+                <p class="alert alert-danger alert-dismissable">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <strong>@message</strong>
+                </p>
+            }
+
+            @flash.get("success").map { message =>
+                <p class="alert alert-success alert-dismissable">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <strong>@message</strong>
+                </p>
+            }
+
+            <div class="well">
+            @form(routes.Repo.save(), 'role -> "form") {
+                <fieldset>
+                    <legend>Ajouter un nouveau dépôt à suivre</legend>
+                    <div class="form-group">
+                        <label class="control-label">Url du dépôt à suivre</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="url" placeholder="https://github.com/scala/scala">
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary" type="submit">Suivre</button>
+                            </span>
+                        </div>
+                    </div>
+                </fieldset>
+            }
+            </div>
+
+            @if(repos.nonEmpty) {
+                <div class="well">
+                    <fieldset>
+                        <legend>Les projets déjà suivis</legend>
+                        <ul class="list-group">
+                            @repos.map { repo =>
+                                <li class="list-group-item">
+                                    Dépôt : <strong>@repo.name</strong>
+                                    par : <strong>@repo.owner</strong>,
+                                    <a href="@getUrl(repo)">@getUrl(repo)</a>
+                                    <span class="pull-right">
+                                        @form(routes.Repo.delete(repo.id.get), 'role -> "form") {
+                                            <button type="submit" class="btn btn-danger btn-xs">
+                                                <span class="glyphicon glyphicon-remove"></span>
+                                            </button>
+                                        }
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    </fieldset>
+                </div>
+            }
+
+        </div>
+    </div>
+}

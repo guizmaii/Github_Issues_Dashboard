@@ -3,24 +3,28 @@
 # ~~~~
 
 # Home page
-GET        /                                 controllers.Application.index
+GET         /                                 controllers.Application.index
 
 # G1
-GET        /g1                               controllers.G1Graphs.getAll
+GET         /g1                               controllers.G1Graphs.getAll
 
 # G2
-GET        /g2                               controllers.G2Graphs.getAll
+GET         /g2                               controllers.G2Graphs.getAll
 
 # G3
-GET        /g3                               controllers.G3Graphs.getAll
+GET         /g3                               controllers.G3Graphs.getAll
 
 # G4
-GET        /g4                               controllers.G4Graphs.getAll
+GET         /g4                               controllers.G4Graphs.getAll
 
+# Repositories
+GET         /config                             controllers.Repo.create
+POST        /config                             controllers.Repo.save
+POST        /config/:id/delete                  controllers.Repo.delete(id:Long)
 
 # Javascript routing
-GET        /assets/javascripts/routes        controllers.Application.javascriptRoutes
+GET         /assets/javascripts/routes        controllers.Application.javascriptRoutes
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file                     controllers.Assets.at(path="/public", file)
+GET         /assets/*file                     controllers.Assets.at(path="/public", file)
 
