@@ -10,7 +10,6 @@
 
         <title>@title</title>
 
-        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
         <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
 
             <!-- GOOGLE FONTS : begin -->
@@ -18,26 +17,28 @@
             <!-- GOOGLE FONTS : end -->
 
             <!-- STYLESHEETS : begin -->
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/lumen/bootstrap.min.css">
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.css">
+        <link rel='stylesheet' href='//cdn.jsdelivr.net@routes.WebJarAssets.at(WebJarAssets.locate("3.1.1/css/bootstrap.min.css"))'>
+            <!-- Remarque: Pour Font Awesome, je ne peux pas utiliser le CDN sinon Firefox et IE n'accepte pas les icons -->
+        <link rel='stylesheet' href='@routes.WebJarAssets.at(WebJarAssets.locate("font-awesome.min.css"))'>
+        <link rel='stylesheet' href='//cdn.jsdelivr.net@routes.WebJarAssets.at(WebJarAssets.locate("nv.d3.min.css"))'>
             <!-- STYLESHEETS : end -->
 
-        <link rel="stylesheet" href="@routes.Assets.at("stylesheets/main.css")">
-
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
     </head>
     <body>
+
+        @navbar()
 
         <div class="container main">
             @content
         </div>
 
             <!-- SCRIPTS : begin -->
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-        <script src="http://d3js.org/d3.v3.js" charset="utf-8"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.js" charset="utf-8"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/sugar/1.4.1/sugar.min.js" charset="utf-8"></script>
+        <script type='text/javascript' src='//cdn.jsdelivr.net@routes.WebJarAssets.at(WebJarAssets.locate("jquery.min.js"))'></script>
+        <script type='text/javascript' src='//cdn.jsdelivr.net@routes.WebJarAssets.at(WebJarAssets.locate("3.1.1/js/bootstrap.min.js"))'></script>
+        <script type='text/javascript' src='//cdn.jsdelivr.net@routes.WebJarAssets.at(WebJarAssets.locate("d3.min.js"))'></script>
+        <script type='text/javascript' src='//cdn.jsdelivr.net@routes.WebJarAssets.at(WebJarAssets.locate("nv.d3.min.js"))'></script>
+        <script type='text/javascript' src='//cdn.jsdelivr.net@routes.WebJarAssets.at(WebJarAssets.locate("sugar.min.js"))'></script>
             <!-- SCRIPTS : end -->
 
         <script type="text/javascript" src="@routes.Application.javascriptRoutes"></script>

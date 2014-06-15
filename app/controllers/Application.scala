@@ -8,7 +8,8 @@ object Application extends Controller {
   //  TODO : Tester à l'ajout du dépot dans le system si celui-ci gére des issues
 
   def index = Action {
-    Ok(views.html.index())
+    implicit rs =>
+      Ok(views.html.index())
   }
 
   // -- Javascript routing
