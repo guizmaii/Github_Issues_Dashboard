@@ -1,9 +1,9 @@
 package controllers
 
 import play.api.mvc._
-import traits.SyncRedisable
+import traits.SyncRedisClient
 
-object G3Graphs extends Controller with SyncRedisable {
+object G3Graphs extends Controller with SyncRedisClient {
 
   def getAll = Action {
     NotImplemented

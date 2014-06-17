@@ -3,7 +3,7 @@ package traits
 import com.redis.RedisClientPool
 import domain.GraphType
 
-trait SyncRedisable {
+trait SyncRedisClient {
 
   import play.api.Play
 

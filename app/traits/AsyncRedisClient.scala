@@ -5,10 +5,10 @@ import akka.actor.Props
 import actors.RedisActor
 
 
-trait AsyncRedisable {
+trait AsyncRedisClient {
 
   import play.api.Play.current
 
-  val redisActor = Akka.system.actorOf(Props[RedisActor])
+  val redisActor = Akka.system.actorOf(Props[RedisActor], "RedisClient")
 
 }

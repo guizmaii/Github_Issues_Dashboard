@@ -1,18 +1,15 @@
 package actors
 
-import akka.actor._
-import scala.concurrent.Future
-import play.api.libs.ws.{WSResponse, WS}
-
-import play.api.libs.concurrent.Execution.Implicits._
-import scala.collection.mutable
-import play.api.Logger
-import play.api.libs.concurrent.Akka
-import scala.collection.mutable.ListBuffer
 import actors.compute.G1.G1Actor
-import play.api.libs.json.JsArray
-import scala.Some
-import play.api.libs.json.JsObject
+import akka.actor._
+import play.api.libs.concurrent.Akka
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.json.{JsArray, JsObject}
+import play.api.libs.ws.{WS, WSResponse}
+
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
 
 // TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
 // TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/
@@ -32,7 +29,7 @@ object GithubActor {
   val client_secret = Play.current.configuration.getString("github.client.secret").get
 }
 
-class GithubActor extends Actor {
+class GithubActor extends Actor with ActorLogging {
 
   import play.api.Play.current
 
@@ -43,7 +40,7 @@ class GithubActor extends Actor {
   override def receive: Receive = {
 
     case repo: GithubRepository =>
-      Logger.debug(s"${this.getClass} | Next Repo : ${repo.owner}/${repo.name}")
+      log.debug(s"${this.getClass} | Next Repo : ${repo.owner}/${repo.name}")
 
       this.repository = repo
 
@@ -54,7 +51,7 @@ class GithubActor extends Actor {
       }
 
     case link: String =>
-      Logger.debug(s"${this.getClass} | Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
+      log.debug(s"${this.getClass} | Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
 
       WS.url(link)
         .withQueryString(
@@ -137,7 +134,7 @@ class GithubActor extends Actor {
    * @param response
    */
   private def handleGithubErrorResponse(response: WSResponse) = {
-    Logger.error(s"${this.getClass} | Erreur Github : ${response.json \ "message"}")
+    log.error(s"${this.getClass} | Erreur Github : ${response.json \ "message"}")
   }
 
   /**
