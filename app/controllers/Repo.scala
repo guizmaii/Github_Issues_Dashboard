@@ -1,8 +1,8 @@
 package controllers
 
 import models.RepoDAO
-import play.api.data.Form
 import play.api.data.Forms._
+import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.db.slick._
 import play.api.mvc._
@@ -15,10 +15,17 @@ object Repo extends Controller {
 
   import play.api.Play.current
 
-  val repoForm = Form(
+  val repoForm: Form[RepoUrl] = Form(
     mapping(
       "url" -> (nonEmptyText verifying pattern(GithubRepositoryUrlService.regexValidator))
-    )(RepoUrl.apply)(RepoUrl.unapply)
+    )(RepoUrl.apply)(RepoUrl.unapply) verifying(
+      "Dépot déjà suivi",
+      repo =>
+        DB.withSession {
+          implicit session =>
+            RepoDAO.notExists(GithubRepositoryUrlService.parseUrl(repo.url))
+        }
+    )
   )
 
   implicit val implicitRepoForm = repoForm

@@ -35,5 +35,13 @@ object RepoDAO {
     repos.where(_.id === id).delete
   }
 
+  def exists(repo: DBRepo)(implicit s: Session): Boolean = {
+    repos.where(_.name === repo.name).where(_.owner === repo.owner).exists.run
+  }
+
+  def notExists(repo: DBRepo)(implicit s: Session): Boolean = {
+    !  exists(repo)
+  }
+
 }
 
