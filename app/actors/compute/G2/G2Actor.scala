@@ -1,7 +1,7 @@
 package actors.compute.G2
 
-import akka.actor.Actor
 import actors.RepositoryData
+import akka.actor.Actor
 import traits.AsyncRedisClient
 
 
