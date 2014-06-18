@@ -1,33 +1,32 @@
 package models
 
-import actors.GithubRepository
 import play.api.db.slick.Config.driver.simple._
 
-case class DBRepo(id: Option[Long],
+case class GithubRepository(id: Option[Long],
                 owner: String,
                 name: String,
                 issuesNumber: Int)
 
 
-class DBReposTable(tag: Tag) extends Table[DBRepo](tag, "GITHUB_REPOS") {
+class GithubRepositoryTable(tag: Tag) extends Table[GithubRepository](tag, "GITHUB_REPOS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def owner = column[String]("owner", O.NotNull)
   def name = column[String]("name", O.NotNull)
   def issuesNumber = column[Int]("issuesNumber")
 
-  def * = (id.?, owner, name, issuesNumber) <> (DBRepo.tupled, DBRepo.unapply)
+  def * = (id.?, owner, name, issuesNumber) <> (GithubRepository.tupled, GithubRepository.unapply)
 }
 
-object RepoDAO {
+object GithubRepositoryDAO {
 
-  private val repos = TableQuery[DBReposTable]
+  private val repos = TableQuery[GithubRepositoryTable]
 
-  def getAll(implicit s: Session): List[DBRepo] = {
+  def getAll(implicit s: Session): List[GithubRepository] = {
     repos.list()
   }
 
-  def save(repo: DBRepo)(implicit s: Session): Int = {
+  def insert(repo: GithubRepository)(implicit s: Session): Int = {
     repos insert repo
   }
 
@@ -35,11 +34,11 @@ object RepoDAO {
     repos.where(_.id === id).delete
   }
 
-  def exists(repo: DBRepo)(implicit s: Session): Boolean = {
+  def exists(repo: GithubRepository)(implicit s: Session): Boolean = {
     repos.where(_.name === repo.name).where(_.owner === repo.owner).exists.run
   }
 
-  def notExists(repo: DBRepo)(implicit s: Session): Boolean = {
+  def notExists(repo: GithubRepository)(implicit s: Session): Boolean = {
     !  exists(repo)
   }
 

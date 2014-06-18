@@ -1,7 +1,7 @@
 package controllers
 
-import play.api.mvc._
 import play.api.Routes
+import play.api.mvc._
 
 object Application extends Controller {
 
@@ -15,13 +15,12 @@ object Application extends Controller {
   // -- Javascript routing
 
   def javascriptRoutes = Action { implicit request =>
-    import routes.javascript._
     Ok(
       Routes.javascriptRouter("jsRoutes")(
-        G1Graphs.getAll,
-        G2Graphs.getAll,
-        G3Graphs.getAll,
-        G4Graphs.getAll
+        routes.javascript.G1Graphs.getAll,
+        routes.javascript.G2Graphs.getAll,
+        routes.javascript.G3Graphs.getAll,
+        routes.javascript.G4Graphs.getAll
       )
     ).as("text/javascript")
   }

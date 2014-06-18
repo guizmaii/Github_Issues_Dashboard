@@ -2,6 +2,7 @@ package actors
 
 import actors.compute.G1.G1Actor
 import akka.actor._
+import models.GithubRepository
 import play.api.libs.concurrent.Akka
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.{JsArray, JsObject}
@@ -14,8 +15,6 @@ import scala.concurrent.Future
 // TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
 // TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/
 // TODO 2 (maybe) : Utiliser les conditional request pour baisser le nombre de requests nécessaire : https://developer.github.com/v3/#conditional-requests
-
-case class GithubRepository(owner: String, name: String)
 
 case class RepositoryData(repo: GithubRepository, issues: List[JsObject])
 
@@ -33,7 +32,7 @@ class GithubActor extends Actor with ActorLogging {
 
   import play.api.Play.current
 
-  val g1Calculator: ActorRef = Akka.system.actorOf(Props[G1Actor])
+  var g1Calculator: ActorRef = null
   var repository: GithubRepository = null
   val issues = new ListBuffer[JsObject]()
 
@@ -41,6 +40,8 @@ class GithubActor extends Actor with ActorLogging {
 
     case repo: GithubRepository =>
       log.debug(s"${this.getClass} | Next Repo : ${repo.owner}/${repo.name}")
+
+      g1Calculator = Akka.system.actorOf(Props[G1Actor], s"${repo.owner}_${repo.name}_calculator")
 
       this.repository = repo
 

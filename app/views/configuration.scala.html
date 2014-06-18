@@ -1,8 +1,7 @@
-@(repos: List[DBRepo])(implicit repoForm: Form[RepoUrl], flash: Flash)
-
-@import helper._
+@(repos: List[GithubRepository])(implicit repoForm: Form[RepoUrl], flash: Flash)
 
 @import services.GithubRepositoryUrlService._
+@import views.html.helper._
 
 @main("Github Dashboard - Add repository") {
 

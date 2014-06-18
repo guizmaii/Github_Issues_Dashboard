@@ -1,6 +1,6 @@
 package controllers
 
-import models.RepoDAO
+import models.GithubRepositoryDAO
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.validation.Constraints._
@@ -23,7 +23,7 @@ object Repo extends Controller {
       repo =>
         DB.withSession {
           implicit session =>
-            RepoDAO.notExists(GithubRepositoryUrlService.parseUrl(repo.url))
+            GithubRepositoryDAO.notExists(GithubRepositoryUrlService.parseUrl(repo.url))
         }
     )
   )
@@ -34,7 +34,7 @@ object Repo extends Controller {
     implicit rs =>
       DB.withSession {
         implicit session =>
-          Ok(html.configuration(RepoDAO.getAll))
+          Ok(html.configuration(GithubRepositoryDAO.getAll))
       }
   }
 
@@ -43,7 +43,7 @@ object Repo extends Controller {
       repoForm.bindFromRequest.fold(
         formWithErrors => Redirect(routes.Repo.create()).flashing("failure" -> formWithErrors.errors(0).message),
         repoUrl => {
-          RepoDAO.save(GithubRepositoryUrlService.parseUrl(repoUrl.url))
+          GithubRepositoryDAO.insert(GithubRepositoryUrlService.parseUrl(repoUrl.url))
           Redirect(routes.Repo.create()).flashing("success" -> "Repo ajouter avec succés")
         }
       )
@@ -51,7 +51,7 @@ object Repo extends Controller {
 
   def delete(id: Long) = DBAction {
     implicit rs =>
-      RepoDAO.delete(id)
+      GithubRepositoryDAO.delete(id)
       Redirect(routes.Repo.create()).flashing("success" -> "Repo supprimer avec succées")
   }
 }

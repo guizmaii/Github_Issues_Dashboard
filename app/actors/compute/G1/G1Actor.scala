@@ -1,8 +1,9 @@
 package actors.compute.G1
 
-import actors.{GithubRepository, RepositoryData}
+import actors.RepositoryData
 import akka.actor.{Actor, ActorLogging, Props}
 import domain.{G1Type, GraphType}
+import models.GithubRepository
 import play.api.libs.concurrent.Akka
 import play.api.libs.json._
 import traits.AsyncRedisClient
@@ -29,6 +30,9 @@ class G1Actor extends Actor with ActorLogging with AsyncRedisClient {
 
   var workers = 0
 
+  // Usefull only for give a unique name to each worker.
+  var workerId = 0
+
   override def receive: Receive = {
 
     case data: RepositoryData =>
@@ -38,7 +42,9 @@ class G1Actor extends Actor with ActorLogging with AsyncRedisClient {
 
       val groupedIssuesIterator = data.issues.grouped(G1Actor.CHUNK_SIZE).toList
       workers = groupedIssuesIterator.length
-      groupedIssuesIterator map ( Akka.system.actorOf(Props[G1Calculator]) ! G1Data(_,  data.issues) )
+      groupedIssuesIterator map (
+        Akka.system.actorOf(Props[G1Calculator], s"${repo.owner}_${repo.name}_worker_${workerId += 1}") ! G1Data(_,  data.issues)
+      )
 
     case calculatedGraphPoints: mutable.Map[Long, Int] =>
       this.graphPoints ++= calculatedGraphPoints
