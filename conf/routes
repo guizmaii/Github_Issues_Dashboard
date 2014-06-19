@@ -18,9 +18,9 @@ GET         /g3                               controllers.G3Graphs.getAll
 GET         /g4                               controllers.G4Graphs.getAll
 
 # Repositories
-GET         /config                           controllers.Repo.create
-POST        /config                           controllers.Repo.save
-POST        /config/:id/delete                controllers.Repo.delete(id:Long)
+GET         /config                           controllers.Config.create
+POST        /config                           controllers.Config.save
+POST        /config/:id/delete                controllers.Config.delete(id:Long)
 
 # Webjars routing
 GET         /webjars/*file                    controllers.WebJarAssets.at(file)

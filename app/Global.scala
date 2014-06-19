@@ -1,7 +1,7 @@
-import actors.{GithubRepository, GithubActor}
-import akka.actor.Props
+import actors.StartOrder
 import play.api._
 import play.api.libs.concurrent.Akka
+import services.TheGreatDispatcher
 
 object Global extends GlobalSettings {
 
@@ -9,23 +9,13 @@ object Global extends GlobalSettings {
     Logger.info("Application has started")
 
     import play.api.Play.current
+    import play.api.libs.concurrent.Execution.Implicits._
+    import scala.concurrent.duration._
 
-//    val repos = List(
-//      GithubRepository("junit-team", "junit"),
-//      GithubRepository("scala", "scala"),
-//      GithubRepository("rails", "rails"),
-//      GithubRepository("ruby", "ruby")
-//    )
-
-    val repos = List(
-//      GithubRepository("scala", "scala")
-//      GithubRepository("rails", "rails")
-//      GithubRepository("guizmaii", "Github_Issues_Dashboard")
-    )
-
-    repos map { Akka.system.actorOf(Props[GithubActor]) ! _ }
+    // Lance la Matrix d'actualisation du cache des données pour les graphs toutes les heures,
+    // à partir de maintenant.
+    Akka.system.scheduler.schedule(0.microsecond, 1.hour, TheGreatDispatcher.getInstance, StartOrder)
   }
-
 
   override def onStop(app: Application) {
     Logger.info("Application shutdown...")

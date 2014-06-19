@@ -1,11 +1,10 @@
 package actors.compute.G4
 
-import akka.actor.Actor
 import actors.RepositoryData
-import traits.AsyncRedisable
+import akka.actor.Actor
 
 
-class G4Actor extends Actor with AsyncRedisable {
+class G4Actor extends Actor {
 
   override def receive: Receive = {
 

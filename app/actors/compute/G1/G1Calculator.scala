@@ -2,9 +2,10 @@ package actors.compute.G1
 
 import akka.actor.Actor
 import org.joda.time.DateTime
-import play.api.libs.json.{JsNull, JsString, JsObject}
-import scala.collection.mutable.ListBuffer
+import play.api.libs.json.{JsNull, JsObject, JsString}
+
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 class G1Calculator extends Actor {
 
@@ -20,7 +21,7 @@ class G1Calculator extends Actor {
           calculatedGraphPoints += parsedCreatedDate.toDate.getTime -> lighterList.count(isOpenAtThisDate(_, parsedCreatedDate))
       }
       sender ! calculatedGraphPoints
-      
+      context.stop(self)
   }
 
   private def getLighterList(issues: List[JsObject]): ListBuffer[(String, String)] = {

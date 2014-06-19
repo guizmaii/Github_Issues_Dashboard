@@ -1,28 +1,23 @@
 package actors
 
+import actors.compute.G1.{CalculationFinishedEvent, G1Actor}
 import akka.actor._
-import scala.concurrent.Future
-import play.api.libs.ws.{WSResponse, WS}
-
+import models.GithubRepository
 import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.json.{JsArray, JsObject}
+import play.api.libs.ws.{WS, WSResponse}
+
 import scala.collection.mutable
-import play.api.Logger
-import play.api.libs.concurrent.Akka
 import scala.collection.mutable.ListBuffer
-import actors.compute.G1.G1Actor
-import play.api.libs.json.JsArray
-import scala.Some
-import play.api.libs.json.JsObject
+import scala.concurrent.Future
 
 // TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
 // TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/
 // TODO 2 (maybe) : Utiliser les conditional request pour baisser le nombre de requests nécessaire : https://developer.github.com/v3/#conditional-requests
 
-case class GithubRepository(owner: String, name: String)
-
 case class RepositoryData(repo: GithubRepository, issues: List[JsObject])
 
-object GithubActor {
+object GithubTradeActor {
 
   val githubApiUrl = "https://api.github.com"
 
@@ -32,18 +27,20 @@ object GithubActor {
   val client_secret = Play.current.configuration.getString("github.client.secret").get
 }
 
-class GithubActor extends Actor {
+class GithubTradeActor extends Actor with ActorLogging {
 
   import play.api.Play.current
 
-  val g1Calculator: ActorRef = Akka.system.actorOf(Props[G1Actor])
+  var g1Calculator: ActorRef = null
   var repository: GithubRepository = null
   val issues = new ListBuffer[JsObject]()
 
   override def receive: Receive = {
 
     case repo: GithubRepository =>
-      Logger.debug(s"${this.getClass} | Next Repo : ${repo.owner}/${repo.name}")
+      log.debug(s"Next Repo : ${repo.owner}/${repo.name}")
+
+      g1Calculator = context.actorOf(Props[G1Actor], s"${repo.owner}_${repo.name}_calculator")
 
       this.repository = repo
 
@@ -54,18 +51,21 @@ class GithubActor extends Actor {
       }
 
     case link: String =>
-      Logger.debug(s"${this.getClass} | Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
+      log.debug(s"Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
 
       WS.url(link)
         .withQueryString(
-          "client_id" -> GithubActor.client_id,
-          "client_secret" -> GithubActor.client_secret
+          "client_id" -> GithubTradeActor.client_id,
+          "client_secret" -> GithubTradeActor.client_secret
         )
         .get()
         .map {
         response =>
           handleGithubResponse(response)
       }
+
+    case cfe: CalculationFinishedEvent =>
+      context.stop(self)
 
   }
 
@@ -79,7 +79,7 @@ class GithubActor extends Actor {
    * @return
    */
   private def getIssues(owner: String, repo: String): Future[WSResponse] = {
-    WS.url(GithubActor.githubApiUrl + s"/repos/$owner/$repo/issues")
+    WS.url(GithubTradeActor.githubApiUrl + s"/repos/$owner/$repo/issues")
       .withQueryString(
         "per_page" -> "100",
         "state" -> "all",
@@ -87,8 +87,8 @@ class GithubActor extends Actor {
         "direction" -> "asc"
       )
       .withQueryString(
-        "client_id" -> GithubActor.client_id,
-        "client_secret" -> GithubActor.client_secret
+        "client_id" -> GithubTradeActor.client_id,
+        "client_secret" -> GithubTradeActor.client_secret
       ).get()
   }
 
@@ -115,18 +115,12 @@ class GithubActor extends Actor {
           case nextLink: Some[String] =>
             self ! nextLink.get
           case _ =>
-            sendDataAndDie()
+            g1Calculator ! RepositoryData(repository, issues.toList)
         }
       case None =>
-        sendDataAndDie()
+        g1Calculator ! RepositoryData(repository, issues.toList)
     }
   }
-
-  private def sendDataAndDie(): Unit = {
-    g1Calculator ! RepositoryData(repository, issues.toList)
-    self ! PoisonPill
-  }
-
 
   // TODO : Améliorer la gestion des réponses non 200
   /**
@@ -137,7 +131,7 @@ class GithubActor extends Actor {
    * @param response
    */
   private def handleGithubErrorResponse(response: WSResponse) = {
-    Logger.error(s"${this.getClass} | Erreur Github : ${response.json \ "message"}")
+    log.error(s"Erreur Github : ${response.json \ "message"}")
   }
 
   /**

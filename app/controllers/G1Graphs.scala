@@ -4,7 +4,7 @@ import domain.G1Type
 import play.api.libs.json._
 import play.api.mvc._
 import spray.json._
-import traits.SyncRedisable
+import traits.SyncRedisClient
 
 import scala.collection.immutable.TreeMap
 
@@ -14,7 +14,7 @@ object G1JsonProtocol extends DefaultJsonProtocol {
   implicit val colorFormat = jsonFormat2(G1Json)
 }
 
-object G1Graphs extends Controller with SyncRedisable {
+object G1Graphs extends Controller with SyncRedisClient {
 
   import com.redis.serialization.Parse.Implicits._
 
@@ -28,6 +28,7 @@ object G1Graphs extends Controller with SyncRedisable {
 
     import controllers.G1JsonProtocol._
 
+    // TODO : Find a way to not parse twice to JSON.
     Ok(Json.parse(List(G1Json("Github_Issues_Dashboard", sortedAndFormatedData)).toJson.compactPrint))
   }
 

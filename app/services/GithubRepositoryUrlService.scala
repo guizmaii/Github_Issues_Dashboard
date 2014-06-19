@@ -1,20 +1,20 @@
 package services
 
-import models.DBRepo
+import models.GithubRepository
 
 object GithubRepositoryUrlService {
 
   private val githubUrl = "https://github.com"
 
-  lazy val regexValidator = s"""$githubUrl/[a-zA-Z0-9]+/[a-zA-Z0-9]+""".r
+  lazy val regexValidator = s"""$githubUrl/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+""".r
   
-  def parseUrl(url: String): DBRepo = {
+  def parseUrl(url: String): GithubRepository = {
     val repoInfos = url.split(s"$githubUrl/")(1).split("/")
     // TODO : Aller chercher le nb d'issues du dépot
-    DBRepo(None, repoInfos(0), repoInfos(1), 0)
+    GithubRepository(None, repoInfos(0), repoInfos(1), 0)
   }
 
-  def getUrl(repo: DBRepo): String = {
+  def getUrl(repo: GithubRepository): String = {
     s"$githubUrl/${repo.owner}/${repo.name}"
   }
 
