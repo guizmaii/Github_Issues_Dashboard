@@ -6,19 +6,19 @@ import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.db.slick._
 import play.api.mvc._
-import services.GithubRepositoryUrlService
+import services.{GithubRepositoryUrlService, TheGreatDispatcher}
 import views.html
 
-case class RepoUrl(url: String)
+case class UserRepoUrl(url: String)
 
-object Repo extends Controller {
+object Config extends Controller {
 
   import play.api.Play.current
 
-  val repoForm: Form[RepoUrl] = Form(
+  val repoForm: Form[UserRepoUrl] = Form(
     mapping(
       "url" -> (nonEmptyText verifying pattern(GithubRepositoryUrlService.regexValidator))
-    )(RepoUrl.apply)(RepoUrl.unapply) verifying(
+    )(UserRepoUrl.apply)(UserRepoUrl.unapply) verifying(
       "Dépot déjà suivi",
       repo =>
         DB.withSession {
@@ -41,10 +41,12 @@ object Repo extends Controller {
   def save = DBAction {
     implicit rs =>
       repoForm.bindFromRequest.fold(
-        formWithErrors => Redirect(routes.Repo.create()).flashing("failure" -> formWithErrors.errors(0).message),
+        formWithErrors => Redirect(routes.Config.create()).flashing("failure" -> formWithErrors.errors(0).message),
         repoUrl => {
-          GithubRepositoryDAO.insert(GithubRepositoryUrlService.parseUrl(repoUrl.url))
-          Redirect(routes.Repo.create()).flashing("success" -> "Repo ajouter avec succés")
+          val githubRepo = GithubRepositoryUrlService.parseUrl(repoUrl.url)
+          GithubRepositoryDAO.insert(githubRepo)
+          TheGreatDispatcher.getInstance ! githubRepo
+          Redirect(routes.Config.create()).flashing("success" -> "Dépôt ajouté avec succés")
         }
       )
   }
@@ -52,6 +54,6 @@ object Repo extends Controller {
   def delete(id: Long) = DBAction {
     implicit rs =>
       GithubRepositoryDAO.delete(id)
-      Redirect(routes.Repo.create()).flashing("success" -> "Repo supprimer avec succées")
+      Redirect(routes.Config.create()).flashing("success" -> "Dépôt supprimé avec succées")
   }
 }

@@ -1,11 +1,10 @@
 package actors
 
 import akka.actor.{Actor, ActorLogging, Props}
-import models.GithubRepositoryDAO
+import models.{GithubRepository, GithubRepositoryDAO}
 import play.api.db.slick._
-import play.api.libs.concurrent.Akka
 
-case class LaunchOrder()
+case class StartOrder()
 
 class DispatcherActor extends Actor with ActorLogging {
 
@@ -13,15 +12,22 @@ class DispatcherActor extends Actor with ActorLogging {
 
   override def receive: Receive = {
 
-    case LaunchOrder =>
+    case StartOrder =>
       DB.withSession(
        implicit session =>
          GithubRepositoryDAO.getAll
       ) map {
         repo =>
-          Akka.system.actorOf(Props[GithubActor], s"${repo.owner}_${repo.name}_actor") ! repo
+          lauchComputation(repo)
       }
 
+    case repo: GithubRepository =>
+      lauchComputation(repo)
+
+  }
+
+  private def lauchComputation(repo: GithubRepository) {
+    context.actorOf(Props[GithubTradeActor], s"${repo.owner}_${repo.name}_actor") ! repo
   }
 
 }

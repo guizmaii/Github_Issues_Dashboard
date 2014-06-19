@@ -1,7 +1,7 @@
-import actors.{DispatcherActor, LaunchOrder}
-import akka.actor.{ActorRef, Props}
+import actors.StartOrder
 import play.api._
 import play.api.libs.concurrent.Akka
+import services.TheGreatDispatcher
 
 object Global extends GlobalSettings {
 
@@ -12,11 +12,9 @@ object Global extends GlobalSettings {
     import play.api.libs.concurrent.Execution.Implicits._
     import scala.concurrent.duration._
 
-    val greatArchitect: ActorRef = Akka.system.actorOf(Props[DispatcherActor], "GreatArchitect")
-
     // Lance la Matrix d'actualisation du cache des données pour les graphs toutes les heures,
     // à partir de maintenant.
-    Akka.system.scheduler.schedule(0.microsecond, 1.hour, greatArchitect, LaunchOrder)
+    Akka.system.scheduler.schedule(0.microsecond, 1.hour, TheGreatDispatcher.getInstance, StartOrder)
   }
 
   override def onStop(app: Application) {

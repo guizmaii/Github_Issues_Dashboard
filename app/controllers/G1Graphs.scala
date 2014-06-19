@@ -28,6 +28,7 @@ object G1Graphs extends Controller with SyncRedisClient {
 
     import controllers.G1JsonProtocol._
 
+    // TODO : Find a way to not parse twice to JSON.
     Ok(Json.parse(List(G1Json("Github_Issues_Dashboard", sortedAndFormatedData)).toJson.compactPrint))
   }
 

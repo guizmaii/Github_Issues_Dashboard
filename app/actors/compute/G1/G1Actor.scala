@@ -1,12 +1,11 @@
 package actors.compute.G1
 
 import actors.RepositoryData
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor._
 import domain.{G1Type, GraphType}
 import models.GithubRepository
-import play.api.libs.concurrent.Akka
 import play.api.libs.json._
-import traits.AsyncRedisClient
+import services.RedisClient
 
 import scala.collection.mutable
 
@@ -14,13 +13,13 @@ case class G1ComputedData(repo: GithubRepository, computedData: mutable.Map[Long
 
 private case class G1Data(issuesChunk: List[JsObject], issues: List[JsObject])
 
+case class CalculationFinishedEvent()
+
 object G1Actor {
   val CHUNK_SIZE = 1000
 }
 
-class G1Actor extends Actor with ActorLogging with AsyncRedisClient {
-
-  import play.api.Play.current
+class G1Actor extends Actor with ActorLogging {
 
   val graphPoints = mutable.Map[Long, Int]()
   var repo: GithubRepository = null
@@ -30,20 +29,24 @@ class G1Actor extends Actor with ActorLogging with AsyncRedisClient {
 
   var workers = 0
 
-  // Usefull only for give a unique name to each worker.
-  var workerId = 0
+  var githhubActor: ActorRef = null
 
   override def receive: Receive = {
 
     case data: RepositoryData =>
       begin = System.currentTimeMillis()
 
+      githhubActor = sender()
       repo = data.repo
 
       val groupedIssuesIterator = data.issues.grouped(G1Actor.CHUNK_SIZE).toList
       workers = groupedIssuesIterator.length
       groupedIssuesIterator map (
-        Akka.system.actorOf(Props[G1Calculator], s"${repo.owner}_${repo.name}_worker_${workerId += 1}") ! G1Data(_,  data.issues)
+        list =>
+          context.actorOf(
+            Props[G1Calculator],
+            s"${repo.owner}_${repo.name}_${groupedIssuesIterator.indexOf(list)}"
+          ) ! G1Data(list,  data.issues)
       )
 
     case calculatedGraphPoints: mutable.Map[Long, Int] =>
@@ -53,7 +56,9 @@ class G1Actor extends Actor with ActorLogging with AsyncRedisClient {
         end = System.currentTimeMillis()
         log.debug("TEMPS PRIS : " + ((end - begin) / 1000) + " secondes")
 
-        redisActor ! G1ComputedData(repo, graphPoints)
+        RedisClient.getInstance ! G1ComputedData(repo, graphPoints)
+        githhubActor ! CalculationFinishedEvent()
+        context.stop(self)
       }
 
   }

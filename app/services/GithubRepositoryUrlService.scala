@@ -6,7 +6,7 @@ object GithubRepositoryUrlService {
 
   private val githubUrl = "https://github.com"
 
-  lazy val regexValidator = s"""$githubUrl/[a-zA-Z0-9]+/[a-zA-Z0-9]+""".r
+  lazy val regexValidator = s"""$githubUrl/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+""".r
   
   def parseUrl(url: String): GithubRepository = {
     val repoInfos = url.split(s"$githubUrl/")(1).split("/")

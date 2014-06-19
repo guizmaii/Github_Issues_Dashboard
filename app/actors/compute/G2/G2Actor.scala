@@ -2,10 +2,9 @@ package actors.compute.G2
 
 import actors.RepositoryData
 import akka.actor.Actor
-import traits.AsyncRedisClient
 
 
-class G2Actor extends Actor with AsyncRedisClient {
+class G2Actor extends Actor {
 
   override def receive: Receive = {
 

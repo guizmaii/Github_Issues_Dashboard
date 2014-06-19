@@ -1,9 +1,8 @@
 package actors
 
-import actors.compute.G1.G1Actor
+import actors.compute.G1.{CalculationFinishedEvent, G1Actor}
 import akka.actor._
 import models.GithubRepository
-import play.api.libs.concurrent.Akka
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.{JsArray, JsObject}
 import play.api.libs.ws.{WS, WSResponse}
@@ -18,7 +17,7 @@ import scala.concurrent.Future
 
 case class RepositoryData(repo: GithubRepository, issues: List[JsObject])
 
-object GithubActor {
+object GithubTradeActor {
 
   val githubApiUrl = "https://api.github.com"
 
@@ -28,7 +27,7 @@ object GithubActor {
   val client_secret = Play.current.configuration.getString("github.client.secret").get
 }
 
-class GithubActor extends Actor with ActorLogging {
+class GithubTradeActor extends Actor with ActorLogging {
 
   import play.api.Play.current
 
@@ -39,9 +38,9 @@ class GithubActor extends Actor with ActorLogging {
   override def receive: Receive = {
 
     case repo: GithubRepository =>
-      log.debug(s"${this.getClass} | Next Repo : ${repo.owner}/${repo.name}")
+      log.debug(s"Next Repo : ${repo.owner}/${repo.name}")
 
-      g1Calculator = Akka.system.actorOf(Props[G1Actor], s"${repo.owner}_${repo.name}_calculator")
+      g1Calculator = context.actorOf(Props[G1Actor], s"${repo.owner}_${repo.name}_calculator")
 
       this.repository = repo
 
@@ -52,18 +51,21 @@ class GithubActor extends Actor with ActorLogging {
       }
 
     case link: String =>
-      log.debug(s"${this.getClass} | Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
+      log.debug(s"Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
 
       WS.url(link)
         .withQueryString(
-          "client_id" -> GithubActor.client_id,
-          "client_secret" -> GithubActor.client_secret
+          "client_id" -> GithubTradeActor.client_id,
+          "client_secret" -> GithubTradeActor.client_secret
         )
         .get()
         .map {
         response =>
           handleGithubResponse(response)
       }
+
+    case cfe: CalculationFinishedEvent =>
+      context.stop(self)
 
   }
 
@@ -77,7 +79,7 @@ class GithubActor extends Actor with ActorLogging {
    * @return
    */
   private def getIssues(owner: String, repo: String): Future[WSResponse] = {
-    WS.url(GithubActor.githubApiUrl + s"/repos/$owner/$repo/issues")
+    WS.url(GithubTradeActor.githubApiUrl + s"/repos/$owner/$repo/issues")
       .withQueryString(
         "per_page" -> "100",
         "state" -> "all",
@@ -85,8 +87,8 @@ class GithubActor extends Actor with ActorLogging {
         "direction" -> "asc"
       )
       .withQueryString(
-        "client_id" -> GithubActor.client_id,
-        "client_secret" -> GithubActor.client_secret
+        "client_id" -> GithubTradeActor.client_id,
+        "client_secret" -> GithubTradeActor.client_secret
       ).get()
   }
 
@@ -113,18 +115,12 @@ class GithubActor extends Actor with ActorLogging {
           case nextLink: Some[String] =>
             self ! nextLink.get
           case _ =>
-            sendDataAndDie()
+            g1Calculator ! RepositoryData(repository, issues.toList)
         }
       case None =>
-        sendDataAndDie()
+        g1Calculator ! RepositoryData(repository, issues.toList)
     }
   }
-
-  private def sendDataAndDie(): Unit = {
-    g1Calculator ! RepositoryData(repository, issues.toList)
-    self ! PoisonPill
-  }
-
 
   // TODO : Améliorer la gestion des réponses non 200
   /**
@@ -135,7 +131,7 @@ class GithubActor extends Actor with ActorLogging {
    * @param response
    */
   private def handleGithubErrorResponse(response: WSResponse) = {
-    log.error(s"${this.getClass} | Erreur Github : ${response.json \ "message"}")
+    log.error(s"Erreur Github : ${response.json \ "message"}")
   }
 
   /**

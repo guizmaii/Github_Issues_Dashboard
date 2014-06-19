@@ -11,13 +11,14 @@ class RedisActor extends Actor with ActorLogging with SyncRedisClient {
     case g1Data: G1ComputedData =>
       val key = getRedisKey(g1Data.repo.owner, g1Data.repo.name, g1Data.graphType)
 
-      log.debug(s"${this.getClass} | Repo reçu pour sauvegarde : $key")
+      log.debug(s"Repo reçu pour sauvegarde : $key")
 
       redisPool.withClient {
         client => {
           client.hmset(key, g1Data.computedData)
         }
       }
+
   }
 
 }

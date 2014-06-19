@@ -1,4 +1,4 @@
-@(repos: List[GithubRepository])(implicit repoForm: Form[RepoUrl], flash: Flash)
+@(repos: List[GithubRepository])(implicit repoForm: Form[UserRepoUrl], flash: Flash)
 
 @import services.GithubRepositoryUrlService._
 @import views.html.helper._
@@ -26,7 +26,7 @@
             }
 
             <div class="well">
-            @form(routes.Repo.save(), 'role -> "form") {
+            @form(routes.Config.save(), 'role -> "form") {
                 <fieldset>
                     <legend>Ajouter un nouveau dépôt à suivre</legend>
                     <div class="form-group">
@@ -53,7 +53,7 @@
                                     par : <strong>@repo.owner</strong>,
                                     <a href="@getUrl(repo)">@getUrl(repo)</a>
                                     <span class="pull-right">
-                                        @form(routes.Repo.delete(repo.id.get), 'role -> "form") {
+                                        @form(routes.Config.delete(repo.id.get), 'role -> "form") {
                                             <button type="submit" class="btn btn-danger btn-xs">
                                                 <span class="fa fa-times"></span>
                                             </button>
