@@ -21,7 +21,6 @@ class G1Calculator extends Actor {
           calculatedGraphPoints += parsedCreatedDate.toDate.getTime -> lighterList.count(isOpenAtThisDate(_, parsedCreatedDate))
       }
       sender ! calculatedGraphPoints
-      context.stop(self)
   }
 
   private def getLighterList(issues: List[JsObject]): ListBuffer[(String, String)] = {

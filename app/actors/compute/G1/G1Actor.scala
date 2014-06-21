@@ -45,7 +45,7 @@ class G1Actor extends Actor with ActorLogging {
         list =>
           context.actorOf(
             Props[G1Calculator],
-            s"${repo.owner}_${repo.name}_${groupedIssuesIterator.indexOf(list)}"
+            s"G1Calculator_${groupedIssuesIterator.indexOf(list)}"
           ) ! G1Data(list,  data.issues)
       )
 
@@ -54,11 +54,10 @@ class G1Actor extends Actor with ActorLogging {
       workers -= 1
       if (workers == 0) {
         end = System.currentTimeMillis()
-        log.debug("TEMPS PRIS : " + ((end - begin) / 1000) + " secondes")
+        log.debug("Temps de calcul : " + ((end - begin) / 1000) + " secondes")
 
         RedisClient.getInstance ! G1ComputedData(repo, graphPoints)
         githhubActor ! CalculationFinishedEvent()
-        context.stop(self)
       }
 
   }

@@ -4,11 +4,10 @@ import actors.compute.G1.{CalculationFinishedEvent, G1Actor}
 import akka.actor._
 import models.GithubRepository
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.json.{JsArray, JsObject}
+import play.api.libs.json.JsObject
 import play.api.libs.ws.{WS, WSResponse}
 
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.collection.immutable.TreeMap
 import scala.concurrent.Future
 
 // TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
@@ -27,20 +26,28 @@ object GithubTradeActor {
   val client_secret = Play.current.configuration.getString("github.client.secret").get
 }
 
-class GithubTradeActor extends Actor with ActorLogging {
+class GithubTradeActor extends AbstractGithubActor {
 
   import play.api.Play.current
 
-  var g1Calculator: ActorRef = null
-  var repository: GithubRepository = null
-  val issues = new ListBuffer[JsObject]()
+  private var g1Calculator: ActorRef = null
+  private var repository: GithubRepository = null
+
+  private var responses = TreeMap[Int, List[JsObject]]()
+
+  private var nbPage = 0
+
+  var begin = 0L
+  var end = 0L
 
   override def receive: Receive = {
 
     case repo: GithubRepository =>
-      log.debug(s"Next Repo : ${repo.owner}/${repo.name}")
+      begin = System.currentTimeMillis()
 
-      g1Calculator = context.actorOf(Props[G1Actor], s"${repo.owner}_${repo.name}_calculator")
+      log.debug(s"Next Repo : ${GithubTradeActor.githubApiUrl}/${repo.owner}/${repo.name}")
+
+      g1Calculator = context.actorOf(Props[G1Actor], "G1Calculator")
 
       this.repository = repo
 
@@ -50,23 +57,17 @@ class GithubTradeActor extends Actor with ActorLogging {
           handleGithubResponse(response)
       }
 
-    case link: String =>
-      log.debug(s"Next link : ${link.substring(link.indexOf("sort=created&page=") + "sort=created&page=".size, link.size)}")
+    case tuple: (Int, List[JsObject]) =>
+      responses = responses + tuple
 
-      WS.url(link)
-        .withQueryString(
-          "client_id" -> GithubTradeActor.client_id,
-          "client_secret" -> GithubTradeActor.client_secret
-        )
-        .get()
-        .map {
-        response =>
-          handleGithubResponse(response)
+      if (responses.size == nbPage) {
+        g1Calculator ! RepositoryData(repository, responses.map(_._2).flatten.toList)
       }
 
     case cfe: CalculationFinishedEvent =>
+      end = System.currentTimeMillis()
+      log.debug("Temps de total (récupération des données + calcul) : " + ((end - begin) / 1000) + " secondes")
       context.stop(self)
-
   }
 
   /**
@@ -92,46 +93,38 @@ class GithubTradeActor extends Actor with ActorLogging {
       ).get()
   }
 
-  private def handleGithubResponse(response: WSResponse) {
-    response.status match {
-      case 200 =>
-        handleGithubOkResponse(response)
-      case _ =>
-        handleGithubErrorResponse(response)
-        self ! PoisonPill
-    }
-  }
-
   /**
    *
    * @param response
    */
-  private def handleGithubOkResponse(response: WSResponse) {
-    issues ++= response.json.asInstanceOf[JsArray].value.asInstanceOf[Seq[JsObject]]
+  override protected def handleOkResponse(response: WSResponse): Unit = {
+    responses = responses + (1 -> convertResponseToJsObjectList(response))
 
     response.header("Link") match {
       case linkHeader: Some[String] =>
-        parseLinkHeader(linkHeader.get).get("next") match {
-          case nextLink: Some[String] =>
-            self ! nextLink.get
+        parseLinkHeader(linkHeader.get).get("last") map {
+          case lastLink: String =>
+            val next = getPageIndexFromLink(parseLinkHeader(linkHeader.get).get("next").get)
+            nbPage = getPageIndexFromLink(lastLink)
+            for (i <- next to nbPage) {
+              context.actorOf(Props[GithubSingleGetterActor], s"getter_$i") ! constructLink(lastLink, i)
+            }
+
           case _ =>
-            g1Calculator ! RepositoryData(repository, issues.toList)
+            sendDataToCalculator()
         }
+
       case None =>
-        g1Calculator ! RepositoryData(repository, issues.toList)
+        sendDataToCalculator()
     }
   }
 
-  // TODO : Améliorer la gestion des réponses non 200
-  /**
-   * Documentation des erreurs de l'API Github :
-   *
-   * https://developer.github.com/v3/#client-errors
-   *
-   * @param response
-   */
-  private def handleGithubErrorResponse(response: WSResponse) = {
-    log.error(s"Erreur Github : ${response.json \ "message"}")
+  private def constructLink(link: String, pageIndex: Int): String = {
+    s"${link.split("&page=")(0)}&page=$pageIndex".trim
+  }
+
+  private def sendDataToCalculator(): Unit = {
+    g1Calculator ! RepositoryData(repository, responses.map{ tuple => tuple._2 }.flatten.toList)
   }
 
   /**
@@ -144,16 +137,14 @@ class GithubTradeActor extends Actor with ActorLogging {
    * @param linkHeader
    * @return
    */
-  private def parseLinkHeader(linkHeader: String): mutable.Map[String, String] = {
-    val linkMap = mutable.Map[String, String]()
-    linkHeader.split(',') map {
+  private def parseLinkHeader(linkHeader: String): Map[String, String] = {
+    (linkHeader.split(',') map {
       part =>
         val section = part.split(';')
         val url = section(0).replace("<", "").replace(">", "")
         val name = section(1).replace(" rel=\"", "").replace("\"", "")
-        linkMap(name) = url
-    }
-    linkMap
+        (name, url)
+    }).toMap
   }
 
 }
