@@ -59,7 +59,6 @@ class GithubTradeActor extends AbstractGithubActor {
 
     case tuple: (Int, List[JsObject]) =>
       responses = responses + tuple
-
       if (responses.size == nbPage) {
         g1Calculator ! RepositoryData(repository, responses.map(_._2).flatten.toList)
       }
