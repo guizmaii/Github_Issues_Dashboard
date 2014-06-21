@@ -1,6 +1,6 @@
 package actors.compute.G1
 
-import actors.RepositoryData
+import actors.github.RepositoryData
 import akka.actor._
 import domain.{G1Type, GraphType}
 import models.GithubRepository

@@ -1,4 +1,4 @@
-package actors
+package actors.github
 
 import akka.actor.ActorRef
 import play.api.libs.ws.{WS, WSResponse}

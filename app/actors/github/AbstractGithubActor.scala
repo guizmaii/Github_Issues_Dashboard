@@ -1,4 +1,4 @@
-package actors
+package actors.github
 
 import akka.actor.{Actor, ActorLogging}
 import play.api.libs.json.{JsArray, JsObject}

@@ -1,6 +1,6 @@
 package actors.compute.G2
 
-import actors.RepositoryData
+import actors.github.RepositoryData
 import akka.actor.Actor
 
 

@@ -1,4 +1,4 @@
-package actors
+package actors.github
 
 import actors.compute.G1.{CalculationFinishedEvent, G1Actor}
 import akka.actor._
