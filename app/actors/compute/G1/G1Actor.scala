@@ -1,6 +1,6 @@
 package actors.compute.G1
 
-import actors.github.RepositoryData
+import actors.github.{CalculationFinishedEvent, RepositoryData}
 import akka.actor._
 import domain.{G1Type, GraphType}
 import models.GithubRepository
@@ -13,8 +13,6 @@ case class G1ComputedData(repo: GithubRepository, computedData: Map[Long, Int], 
 private case class LightIssue(created_at: DateTime, closed_at: DateTime)
 
 private case class G1Data(periodChunk: List[DateTime], lightIssues: List[LightIssue])
-
-case class CalculationFinishedEvent()
 
 object G1Actor {
 
@@ -37,14 +35,10 @@ class G1Actor extends Actor with ActorLogging {
 
   var githhubActor: ActorRef = null
 
-  private val datesBetweenGithubOpenDateAndToday: List[DateTime] = {
+  private val daysBetweenGithubOpenDateAndToday: List[DateTime] = {
     val days: Int = Days.daysBetween(G1Actor.githubOpenDate, new DateTime()).getDays
     (for (i <- 0 to days)
-      yield G1Actor.githubOpenDate.withFieldAdded(DurationFieldType.days(), i)).toList
-  }
-
-  private def optimisedChunkSize(listSize: Int): Int = {
-    listSize / G1Actor.availableProcessors
+      yield G1Actor.githubOpenDate.withFieldAdded(DurationFieldType.days, i)).toList
   }
 
   override def receive: Receive = {
@@ -55,7 +49,7 @@ class G1Actor extends Actor with ActorLogging {
       githhubActor = sender()
       repo = data.repo
 
-      val blocks = datesBetweenGithubOpenDateAndToday.grouped( optimisedChunkSize(datesBetweenGithubOpenDateAndToday.size) ).toList
+      val blocks = daysBetweenGithubOpenDateAndToday.grouped( optimisedChunkSize(daysBetweenGithubOpenDateAndToday.size) ).toList
       workers = blocks.length
       val lighterList = getLighterList(data.issues)
       blocks map (
@@ -69,7 +63,7 @@ class G1Actor extends Actor with ActorLogging {
     case computedGraphPoints: Map[Long, Int] =>
       this.graphPoints = this.graphPoints ++ computedGraphPoints
       workers -= 1
-      if (workers == 0) {
+      if (allWorkersHasFinished) {
         end = System.currentTimeMillis()
         log.debug("Temps de calcul : " + ((end - begin) / 1000) + " secondes")
 
@@ -77,6 +71,14 @@ class G1Actor extends Actor with ActorLogging {
         githhubActor ! CalculationFinishedEvent()
       }
 
+  }
+
+  def allWorkersHasFinished: Boolean = {
+    workers == 0
+  }
+
+  private def optimisedChunkSize(listSize: Int): Int = {
+    listSize / G1Actor.availableProcessors
   }
 
   private def getLighterList(issues: List[JsObject]): List[LightIssue] = {

@@ -17,10 +17,10 @@ object Application extends Controller {
   def javascriptRoutes = Action { implicit request =>
     Ok(
       Routes.javascriptRouter("jsRoutes")(
-        routes.javascript.G1Graphs.getAll,
-        routes.javascript.G2Graphs.getAll,
-        routes.javascript.G3Graphs.getAll,
-        routes.javascript.G4Graphs.getAll
+        routes.javascript.G1Controller.getAll,
+        routes.javascript.G2Controller.getAll,
+        routes.javascript.G3Controller.getAll,
+        routes.javascript.G4Controller.getAll
       )
     ).as("text/javascript")
   }

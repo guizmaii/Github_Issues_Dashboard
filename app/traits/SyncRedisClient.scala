@@ -1,7 +1,7 @@
 package traits
 
 import com.redis.RedisClientPool
-import domain.GraphType
+import domain.{G4Type, GraphType}
 
 trait SyncRedisClient {
 
@@ -12,8 +12,10 @@ trait SyncRedisClient {
 
   val redisPool = new RedisClientPool(host, port)
 
-  def getRedisKey(repoOwner: String, repoName: String, graphType: GraphType): String = {
+  def getG1RedisKey(repoOwner: String, repoName: String, graphType: GraphType): String = {
     s"$repoOwner::$repoName::$graphType"
   }
+
+  val G4key: String = G4Type.toString
 
 }

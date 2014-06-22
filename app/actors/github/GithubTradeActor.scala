@@ -1,6 +1,7 @@
 package actors.github
 
-import actors.compute.G1.{CalculationFinishedEvent, G1Actor}
+import actors.compute.G1.G1Actor
+import actors.compute.G4.G4Actor
 import akka.actor._
 import models.GithubRepository
 import play.api.libs.concurrent.Akka
@@ -18,6 +19,8 @@ import scala.util.{Failure, Success}
 
 case class RepositoryData(repo: GithubRepository, issues: List[JsObject])
 
+case class CalculationFinishedEvent()
+
 object GithubTradeActor {
 
   val githubApiUrl = "https://api.github.com"
@@ -32,9 +35,12 @@ class GithubTradeActor extends AbstractGithubActor {
 
   import play.api.Play.current
 
-  private var g1Calculator: ActorRef = null
-  private var repository: GithubRepository = null
 
+  private var nbCalculator = 2 // Nombre d'acteurs de calcul (déclarés ci-dessous)
+  private val g1Calculator: ActorRef = context.actorOf(Props[G1Actor], "G1_Actor")
+  private val g4Calculator: ActorRef = context.actorOf(Props[G4Actor], "G4_Actor")
+
+  private var repository: GithubRepository = null
   private var childrenResponses = TreeMap[Int, List[JsObject]]()
 
   private var nbPage = 0
@@ -51,11 +57,8 @@ class GithubTradeActor extends AbstractGithubActor {
   override def receive: Receive = {
 
     case repo: GithubRepository =>
-      begin = System.currentTimeMillis()
-
       log.debug(s"Next Repo : ${GithubTradeActor.githubApiUrl}/${repo.owner}/${repo.name}")
-
-      g1Calculator = context.actorOf(Props[G1Actor], "G1_Actor")
+      begin = System.currentTimeMillis()
 
       this.repository = repo
 
@@ -70,14 +73,26 @@ class GithubTradeActor extends AbstractGithubActor {
 
     case tuple: (Int, List[JsObject]) =>
       childrenResponses = childrenResponses + tuple
-      if (childrenResponses.size == nbPage) {
-        g1Calculator ! RepositoryData(repository, childrenResponses.map(_._2).flatten.toList)
+      if (allGettersAnswered) {
+        sendDataToCalculators()
       }
 
     case cfe: CalculationFinishedEvent =>
-      end = System.currentTimeMillis()
-      log.debug("Temps de total (récupération des données + calcul) : " + ((end - begin) / 1000) + " secondes")
-      context.stop(self)
+      nbCalculator -= 1
+      if (allCalculatorsHasFinished) {
+        end = System.currentTimeMillis()
+        log.debug("Temps de total (récupération des données + calcul) : " + ((end - begin) / 1000) + " secondes")
+        context.stop(self)
+      }
+
+  }
+
+  def allCalculatorsHasFinished: Boolean = {
+    nbCalculator == 0
+  }
+
+  private def allGettersAnswered: Boolean = {
+    childrenResponses.size == nbPage
   }
 
   /**
@@ -111,12 +126,12 @@ class GithubTradeActor extends AbstractGithubActor {
     childrenResponses = childrenResponses + (1 -> convertResponseToJsObjectList(response))
 
     response.headers exists { _.lowercaseName == "link" }  match {
-      case false => sendDataToCalculator()
+      case false => sendDataToCalculators()
       case true =>
         val linkHeader = (response.headers find { _.lowercaseName == "link" }).get
         val parsedLinkHeader = parseLinkHeader(linkHeader.value)
         parsedLinkHeader.get("last") match {
-          case None => sendDataToCalculator()
+          case None => sendDataToCalculators()
           case lastLink: Some[String] =>
             val next = getPageIndexFromLink(parsedLinkHeader.get("next").get)
             nbPage = getPageIndexFromLink(lastLink.get)
@@ -131,8 +146,10 @@ class GithubTradeActor extends AbstractGithubActor {
     s"${link.split("&page=")(0)}&page=$pageIndex".trim
   }
 
-  private def sendDataToCalculator(): Unit = {
-    g1Calculator ! RepositoryData(repository, childrenResponses.map{ tuple => tuple._2 }.flatten.toList)
+  private def sendDataToCalculators(): Unit = {
+    val data = RepositoryData(repository, childrenResponses.map(_._2).flatten.toList)
+    g1Calculator ! data
+    g4Calculator ! data
   }
 
   /**

@@ -13,10 +13,10 @@ import scala.collection.immutable.TreeMap
 case class G1Json(key: String, values: Array[Array[Long]])
 
 object G1JsonProtocol extends DefaultJsonProtocol {
-  implicit val colorFormat = jsonFormat2(G1Json)
+  implicit val g1Format = jsonFormat2(G1Json)
 }
 
-object G1Graphs extends Controller with SyncRedisClient {
+object G1Controller extends Controller with SyncRedisClient {
 
   import com.redis.serialization.Parse.Implicits._
   import controllers.G1JsonProtocol._
@@ -27,15 +27,13 @@ object G1Graphs extends Controller with SyncRedisClient {
         implicit repo: GithubRepository =>
           val data = redisPool.withClient {
             client =>
-              client.hgetall[Long, Int](getRedisKey(repo.owner, repo.name, G1Type))
+              client.hgetall[Long, Int](getG1RedisKey(repo.owner, repo.name, G1Type))
           }
           G1Json(repo.name, MapToArrayOfArrayOfLong(sortData(data.get)))
       }
       // TODO : Find a way to not parse twice to JSON.
       Ok(Json.parse(data.toJson.compactPrint))
   }
-
-
 
   private def sortData(data: Map[Long, Int]): TreeMap[Long, Int] = {
     TreeMap[Long, Int]() ++ ( for(t <- data) yield t._1 -> t._2 )

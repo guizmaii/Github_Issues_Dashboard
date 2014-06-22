@@ -6,16 +6,16 @@
 GET         /                                 controllers.Application.index
 
 # G1
-GET         /g1                               controllers.G1Graphs.getAll
+GET         /g1                               controllers.G1Controller.getAll
 
 # G2
-GET         /g2                               controllers.G2Graphs.getAll
+GET         /g2                               controllers.G2Controller.getAll
 
 # G3
-GET         /g3                               controllers.G3Graphs.getAll
+GET         /g3                               controllers.G3Controller.getAll
 
 # G4
-GET         /g4                               controllers.G4Graphs.getAll
+GET         /g4                               controllers.G4Controller.getAll
 
 # Repositories
 GET         /config                           controllers.Config.create

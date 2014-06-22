@@ -1,6 +1,6 @@
 $(document).ready(function () {
 
-    var r = jsRoutes.controllers.G1Graphs.getAll();
+    var r = jsRoutes.controllers.G1Controller.getAll();
 
     d3.json(r.url, function(data) {
         nv.addGraph(function() {
