@@ -16,7 +16,7 @@ private case class G1Data(issuesChunk: List[JsObject], issues: List[JsObject])
 case class CalculationFinishedEvent()
 
 object G1Actor {
-  val CHUNK_SIZE = 1000
+  val availableProcessor: Int = Runtime.getRuntime.availableProcessors
 }
 
 class G1Actor extends Actor with ActorLogging {
@@ -39,7 +39,7 @@ class G1Actor extends Actor with ActorLogging {
       githhubActor = sender()
       repo = data.repo
 
-      val groupedIssuesIterator = data.issues.grouped(G1Actor.CHUNK_SIZE).toList
+      val groupedIssuesIterator = data.issues.grouped( optimisedChunkSize(data.issues.size) ).toList
       workers = groupedIssuesIterator.length
       groupedIssuesIterator map (
         list =>
@@ -60,6 +60,14 @@ class G1Actor extends Actor with ActorLogging {
         githhubActor ! CalculationFinishedEvent()
       }
 
+  }
+
+  private def optimisedChunkSize(listSize: Int): Int = {
+    // La valeur 1000 ici est arbitraire, issue de l'expérience.
+    listSize < 1000 match {
+      case true => listSize
+      case false => listSize / (2 * G1Actor.availableProcessor)
+    }
   }
 
 }
