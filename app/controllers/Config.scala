@@ -30,12 +30,9 @@ object Config extends Controller {
 
   implicit val implicitRepoForm = repoForm
 
-  def create = Action {
+  def create = DBAction {
     implicit rs =>
-      DB.withSession {
-        implicit session =>
-          Ok(html.configuration(GithubRepositoryDAO.getAll))
-      }
+      Ok(html.configuration(GithubRepositoryDAO.getAll))
   }
 
   def save = DBAction {

@@ -1,5 +1,6 @@
 package actors
 
+import actors.github.GithubTradeActor
 import akka.actor.{Actor, ActorLogging, Props}
 import models.{GithubRepository, GithubRepositoryDAO}
 import play.api.db.slick._

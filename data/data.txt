@@ -8,3 +8,11 @@ durée du calcul avec List & Tuples & Workers  : 22 secondes
 
 rails issues / 10 = 1555
 1000 * (rails issues) = 15 554 000
+
+Nouveau record pour Rails (le temps de calcul est améliorable) :
+[debug] a.c.G1.G1Actor - Temps de calcul : 22 secondes
+[debug] a.g.GithubTradeActor - Temps de total (récupération des données + calcul) : 39 secondes
+
+Temps avec le nouvelle algo basé sur les jours depuis l'ouverture de Github :
+[debug] a.c.G1.G1Actor - Temps de calcul : 0 secondes
+[debug] a.g.GithubTradeActor - Temps de total (récupération des données + calcul) : 30 secondes

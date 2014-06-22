@@ -1,6 +1,6 @@
 package actors.compute.G3
 
-import actors.RepositoryData
+import actors.github.RepositoryData
 import akka.actor.Actor
 
 
