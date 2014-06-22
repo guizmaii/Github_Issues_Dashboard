@@ -1,0 +1,48 @@
+// Le formatage n'est pas bon mais c'est juste pour observer ce que contient la réponse de Github.
+
+HttpResponse(
+    200 OK,
+    HttpEntity(
+        application/json;
+        charset=UTF-8,
+        [
+            {
+                "url":"https://api.github.com/repos/scala/scala/issues/1","labels_url":"https://api.github.com/repos/scala/scala/issues/1/labels{/name}","comments_url":"https://api.github.com/repos/scala/scala/issues/1/comments","events_url":"https://api.github.com/repos/scala/scala/issues/1/events","html_url":"https://github.com/scala/scala/pull/1","id":2413224,"number":1,"title":"Fix to AnnotationInfo position","user":{"login":"odersky","id":795990,"avatar_url":"https://avatars.githubusercontent.com/u/79599...),
+                List(
+                    X-Served-By: 03d91026ad8428f4d9966d7434f9d82e,
+                    Vary: Accept-Encoding,
+                    X-Content-Type-Options: nosniff,
+                    Strict-Transport-Security: max-age=31536000,
+                    X-GitHub-Request-Id: 599E1990:01FD:FE21AB4:53A618B2,
+                    Access-Control-Allow-Origin: *,
+                    Access-Control-Expose-Headers: ETag,
+                    Link,
+                    X-GitHub-OTP,
+                    X-RateLimit-Limit,
+                    X-RateLimit-Remaining,
+                    X-RateLimit-Reset,
+                    X-OAuth-Scopes,
+                    X-Accepted-OAuth-Scopes,
+                    X-Poll-Interval,
+                    Access-Control-Allow-Credentials: true,
+                    Content-Length: 201236,
+                    Content-Security-Policy: default-src 'none',
+                    X-Frame-Options: deny,
+                    X-XSS-Protection: 1; mode=block,
+                    Link: <https://api.github.com/repositories/2888818/issues?client_id=fa71bc86ca0ccf12d408&client_secret=77145341d407a2f2600ec3a06bc9a702dc4fb57f&per_page=100&state=all&sort=created&direction=asc&page=2>; rel=next, <https://api.github.com/repositories/2888818/issues?client_id=fa71bc86ca0ccf12d408&client_secret=77145341d407a2f2600ec3a06bc9a702dc4fb57f&per_page=100&state=all&sort=created&direction=asc&page=39>; rel=last,
+                    X-GitHub-Media-Type: github.v3; format=json,
+                    Vary: Accept,
+                    ETag: "393d9a3fa726b2fec4a686a6a8482f68",
+                    Cache-Control: public,
+                    max-age=60,
+                    s-maxage=60,
+                    X-RateLimit-Reset: 1403395788,
+                    X-RateLimit-Remaining: 4957,
+                    X-RateLimit-Limit: 5000,
+                    Status: 200 OK,
+                    Content-Type: application/json; charset=UTF-8,
+                    Date: Sat, 21 Jun 2014 23:43:47 GMT,
+                    Server: GitHub.com
+                ),
+                HTTP/1.1)
+            }

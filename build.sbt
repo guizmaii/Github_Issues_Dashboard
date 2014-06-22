@@ -13,9 +13,9 @@ resolvers += Resolver.url("github repo for html5tags", url("http://loicdescotte.
 libraryDependencies ++= Seq(
   jdbc,
   cache,
-  ws,
   "net.debasishg" %% "redisclient" % "2.13",
-  "io.spray" %%  "spray-json" % "1.2.6",
+  "io.spray" %%  "spray-json" % "1.2.6", // Les versions de spray et de spray sont décorrélées
+  "io.spray" % "spray-client" % "1.3.1",
   "com.typesafe.play" %% "play-slick" % "0.7.0-M1",
   "org.webjars" %% "webjars-play" % "2.3.0",
   "org.webjars" % "jquery" % "1.11.1",

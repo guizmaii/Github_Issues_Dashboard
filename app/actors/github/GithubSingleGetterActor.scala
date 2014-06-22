@@ -1,16 +1,25 @@
 package actors.github
 
 import akka.actor.ActorRef
-import play.api.libs.ws.{WS, WSResponse}
+import play.api.libs.concurrent.Akka
+import spray.client.pipelining._
+import spray.http._
 
+import scala.concurrent.Future
 
 class GithubSingleGetterActor extends AbstractGithubActor {
 
   import play.api.Play.current
 
-import scala.concurrent.ExecutionContext.Implicits._
+  // Needed by spray-client
+  implicit val system = Akka.system
+  import system.dispatcher // execution context for futures
 
   private var theSender: ActorRef = null
+
+  val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
+
+  private val selfId: Int = self.path.name.split("_")(1).toInt
 
   override def receive: Receive = {
 
@@ -21,17 +30,14 @@ import scala.concurrent.ExecutionContext.Implicits._
       // et ne peut donc plus l'utiliser dans la méthode handleOkResponse
       theSender = sender()
 
-      WS.url(link)
-        .get()
-        .map {
+      pipeline(Get(link)) map {
         response =>
           handleGithubResponse(response)
       }
 
   }
 
-  override protected def handleOkResponse(response: WSResponse): Unit = {
-    theSender ! (self.path.name.split("_")(1).toInt -> convertResponseToJsObjectList(response))
+  override protected def handleOkResponse(response: HttpResponse): Unit = {
+    theSender ! (selfId -> convertResponseToJsObjectList(response))
   }
-
 }

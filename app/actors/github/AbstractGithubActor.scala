@@ -1,19 +1,18 @@
 package actors.github
 
 import akka.actor.{Actor, ActorLogging}
-import play.api.libs.json.{JsArray, JsObject}
-import play.api.libs.ws.WSResponse
-
+import play.api.libs.json.{JsArray, JsObject, Json}
+import spray.http.HttpResponse
 
 abstract class AbstractGithubActor extends Actor with ActorLogging {
 
-  protected def handleOkResponse(response: WSResponse): Unit
+  protected def handleOkResponse(response: HttpResponse): Unit
 
-  protected def handleGithubResponse(response: WSResponse) {
-    response.status match {
-      case 200 =>
+  protected def handleGithubResponse(response: HttpResponse) {
+    response.status.isSuccess match {
+      case true =>
         handleOkResponse(response)
-      case _ =>
+      case false =>
         handleErrorResponse(response)
         context.stop(self)
     }
@@ -27,16 +26,16 @@ abstract class AbstractGithubActor extends Actor with ActorLogging {
    *
    * @param response
    */
-  protected def handleErrorResponse(response: WSResponse) = {
-    log.error(s"Erreur Github : ${response.json \ "message"}")
+  protected def handleErrorResponse(response: HttpResponse) = {
+    log.error(s"Erreur Github : ${response.status.value}")
   }
 
   protected def getPageIndexFromLink(link: String): Int = {
     link.split("&page=")(1).toInt
   }
 
-  protected def convertResponseToJsObjectList(response: WSResponse): List[JsObject] = {
-    response.json.asInstanceOf[JsArray].value.asInstanceOf[Seq[JsObject]].toList
+  protected def convertResponseToJsObjectList(response: HttpResponse): List[JsObject] = {
+    Json.parse(response.entity.asString).asInstanceOf[JsArray].value.asInstanceOf[Seq[JsObject]].toList
   }
 
 }

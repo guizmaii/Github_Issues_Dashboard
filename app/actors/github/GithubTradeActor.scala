@@ -3,9 +3,10 @@ package actors.github
 import actors.compute.G1.{CalculationFinishedEvent, G1Actor}
 import akka.actor._
 import models.GithubRepository
-import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.concurrent.Akka
 import play.api.libs.json.JsObject
-import play.api.libs.ws.{WS, WSResponse}
+import spray.client.pipelining._
+import spray.http._
 
 import scala.collection.immutable.TreeMap
 import scala.concurrent.Future
@@ -33,12 +34,18 @@ class GithubTradeActor extends AbstractGithubActor {
   private var g1Calculator: ActorRef = null
   private var repository: GithubRepository = null
 
-  private var responses = TreeMap[Int, List[JsObject]]()
+  private var childrenResponses = TreeMap[Int, List[JsObject]]()
 
   private var nbPage = 0
 
   var begin = 0L
   var end = 0L
+
+  // Needed by spray-client
+  implicit val system = Akka.system
+  import system.dispatcher // execution context for futures
+
+  val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 
   override def receive: Receive = {
 
@@ -51,16 +58,15 @@ class GithubTradeActor extends AbstractGithubActor {
 
       this.repository = repo
 
-      getIssues(repo.owner, repo.name)
-        .map {
+      getIssues(repo.owner, repo.name).map {
         response =>
           handleGithubResponse(response)
       }
 
     case tuple: (Int, List[JsObject]) =>
-      responses = responses + tuple
-      if (responses.size == nbPage) {
-        g1Calculator ! RepositoryData(repository, responses.map(_._2).flatten.toList)
+      childrenResponses = childrenResponses + tuple
+      if (childrenResponses.size == nbPage) {
+        g1Calculator ! RepositoryData(repository, childrenResponses.map(_._2).flatten.toList)
       }
 
     case cfe: CalculationFinishedEvent =>
@@ -78,32 +84,33 @@ class GithubTradeActor extends AbstractGithubActor {
    * @param repo
    * @return
    */
-  private def getIssues(owner: String, repo: String): Future[WSResponse] = {
-    WS.url(GithubTradeActor.githubApiUrl + s"/repos/$owner/$repo/issues")
-      .withQueryString(
-        "per_page" -> "100",
-        "state" -> "all",
-        "sort" -> "created",
-        "direction" -> "asc"
+  private def getIssues(owner: String, repo: String): Future[HttpResponse] = {
+    pipeline(
+      Get(
+        s"${GithubTradeActor.githubApiUrl}/repos/$owner/$repo/issues" +
+          s"?client_id=${GithubTradeActor.client_id}" +
+          s"&client_secret=${GithubTradeActor.client_secret}" +
+          s"&per_page=${100}" +
+          s"&state=${"all"}" +
+          s"&sort=${"created"}" +
+          s"&direction=${"asc"}"
       )
-      .withQueryString(
-        "client_id" -> GithubTradeActor.client_id,
-        "client_secret" -> GithubTradeActor.client_secret
-      ).get()
+    )
   }
 
   /**
    *
    * @param response
    */
-  override protected def handleOkResponse(response: WSResponse): Unit = {
-    responses = responses + (1 -> convertResponseToJsObjectList(response))
+  override protected def handleOkResponse(response: HttpResponse): Unit = {
+    childrenResponses = childrenResponses + (1 -> convertResponseToJsObjectList(response))
 
-    response.header("Link") match {
-      case linkHeader: Some[String] =>
-        parseLinkHeader(linkHeader.get).get("last") map {
+    response.headers find { _.lowercaseName == "link" }  match {
+      case linkHeader: Option[HttpHeader] =>
+        val parsedLinkHeader = parseLinkHeader(linkHeader.get.value)
+        parsedLinkHeader.get("last") map {
           case lastLink: String =>
-            val next = getPageIndexFromLink(parseLinkHeader(linkHeader.get).get("next").get)
+            val next = getPageIndexFromLink(parsedLinkHeader.get("next").get)
             nbPage = getPageIndexFromLink(lastLink)
             for (i <- next to nbPage) {
               context.actorOf(Props[GithubSingleGetterActor], s"getter_$i") ! constructLink(lastLink, i)
@@ -113,7 +120,7 @@ class GithubTradeActor extends AbstractGithubActor {
             sendDataToCalculator()
         }
 
-      case None =>
+      case _ =>
         sendDataToCalculator()
     }
   }
@@ -123,7 +130,7 @@ class GithubTradeActor extends AbstractGithubActor {
   }
 
   private def sendDataToCalculator(): Unit = {
-    g1Calculator ! RepositoryData(repository, responses.map{ tuple => tuple._2 }.flatten.toList)
+    g1Calculator ! RepositoryData(repository, childrenResponses.map{ tuple => tuple._2 }.flatten.toList)
   }
 
   /**
@@ -141,7 +148,7 @@ class GithubTradeActor extends AbstractGithubActor {
       part =>
         val section = part.split(';')
         val url = section(0).replace("<", "").replace(">", "")
-        val name = section(1).replace(" rel=\"", "").replace("\"", "")
+        val name = section(1).replace(" rel=", "")
         (name, url)
     }).toMap
   }
