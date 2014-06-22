@@ -1,6 +1,7 @@
 package actors.github
 
 import akka.actor.ActorRef
+import scala.util.{Success, Failure}
 import play.api.libs.concurrent.Akka
 import spray.client.pipelining._
 import spray.http._
@@ -30,14 +31,15 @@ class GithubSingleGetterActor extends AbstractGithubActor {
       // et ne peut donc plus l'utiliser dans la méthode handleOkResponse
       theSender = sender()
 
-      pipeline(Get(link)) map {
-        response =>
-          handleGithubResponse(response)
+      pipeline(Get(link)) onComplete {
+        case Success(response) =>
+          theSender ! (selfId -> convertResponseToJsObjectList(response))
+
+        case Failure(error) =>
+          handleFailureResponse(error)
+          context.stop(self)
       }
 
   }
 
-  override protected def handleOkResponse(response: HttpResponse): Unit = {
-    theSender ! (selfId -> convertResponseToJsObjectList(response))
-  }
 }

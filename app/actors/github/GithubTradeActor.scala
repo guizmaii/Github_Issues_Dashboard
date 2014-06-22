@@ -10,6 +10,7 @@ import spray.http._
 
 import scala.collection.immutable.TreeMap
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 // TODO 1 : gérer les headers rate-limits : https://developer.github.com/v3/#rate-limiting
 // TODO 1.1 : Les rates limites peuvent être géré avec ça : https://developer.github.com/v3/rate_limit/
@@ -58,9 +59,13 @@ class GithubTradeActor extends AbstractGithubActor {
 
       this.repository = repo
 
-      getIssues(repo.owner, repo.name).map {
-        response =>
-          handleGithubResponse(response)
+      getIssues(repo.owner, repo.name) onComplete {
+        case Success(response) =>
+          handleSuccessResponse(response)
+
+        case Failure(error) =>
+          handleFailureResponse(error)
+          context.stop(self)
       }
 
     case tuple: (Int, List[JsObject]) =>
@@ -102,13 +107,15 @@ class GithubTradeActor extends AbstractGithubActor {
    *
    * @param response
    */
-  override protected def handleOkResponse(response: HttpResponse): Unit = {
+  private def handleSuccessResponse(response: HttpResponse): Unit = {
     childrenResponses = childrenResponses + (1 -> convertResponseToJsObjectList(response))
 
     response.headers find { _.lowercaseName == "link" }  match {
+
       case linkHeader: Option[HttpHeader] =>
         val parsedLinkHeader = parseLinkHeader(linkHeader.get.value)
         parsedLinkHeader.get("last") map {
+
           case lastLink: String =>
             val next = getPageIndexFromLink(parsedLinkHeader.get("next").get)
             nbPage = getPageIndexFromLink(lastLink)

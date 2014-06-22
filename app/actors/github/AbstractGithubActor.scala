@@ -6,28 +6,16 @@ import spray.http.HttpResponse
 
 abstract class AbstractGithubActor extends Actor with ActorLogging {
 
-  protected def handleOkResponse(response: HttpResponse): Unit
-
-  protected def handleGithubResponse(response: HttpResponse) {
-    response.status.isSuccess match {
-      case true =>
-        handleOkResponse(response)
-      case false =>
-        handleErrorResponse(response)
-        context.stop(self)
-    }
-  }
-
   // TODO : Améliorer la gestion des réponses non 200
   /**
    * Documentation des erreurs de l'API Github :
    *
    * https://developer.github.com/v3/#client-errors
    *
-   * @param response
+   * @param error
    */
-  protected def handleErrorResponse(response: HttpResponse) = {
-    log.error(s"Erreur Github : ${response.status.value}")
+  protected def handleFailureResponse(error: Throwable) = {
+    log.error(s"Erreur Github : ${error.getMessage}")
   }
 
   protected def getPageIndexFromLink(link: String): Int = {
