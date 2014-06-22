@@ -4,24 +4,30 @@ import actors.github.RepositoryData
 import akka.actor._
 import domain.{G1Type, GraphType}
 import models.GithubRepository
+import org.joda.time.{DateTime, Days, DurationFieldType}
 import play.api.libs.json._
 import services.RedisClient
 
-import scala.collection.mutable
+case class G1ComputedData(repo: GithubRepository, computedData: Map[Long, Int], graphType: GraphType = G1Type)
 
-case class G1ComputedData(repo: GithubRepository, computedData: mutable.Map[Long, Int], graphType: GraphType = G1Type)
+private case class LightIssue(created_at: DateTime, closed_at: DateTime)
 
-private case class G1Data(issuesChunk: List[JsObject], issues: List[JsObject])
+private case class G1Data(periodChunk: List[DateTime], lightIssues: List[LightIssue])
 
 case class CalculationFinishedEvent()
 
 object G1Actor {
-  val availableProcessor: Int = Runtime.getRuntime.availableProcessors
+
+  val availableProcessors: Int = Runtime.getRuntime.availableProcessors
+
+  // Date de lancement de Github (voir Wikipedia) : 01/04/2008
+  // Ce sera notre année 0 en qq sorte ou encore, pour les informaticiens, cela équivaut au 01/01/1970 du temps Posix.
+  val githubOpenDate = new DateTime(2008, 4, 1, 0, 0)
 }
 
 class G1Actor extends Actor with ActorLogging {
 
-  val graphPoints = mutable.Map[Long, Int]()
+  var graphPoints = Map[Long, Int]()
   var repo: GithubRepository = null
 
   var begin = 0L
@@ -31,6 +37,16 @@ class G1Actor extends Actor with ActorLogging {
 
   var githhubActor: ActorRef = null
 
+  private val datesBetweenGithubOpenDateAndToday: List[DateTime] = {
+    val days: Int = Days.daysBetween(G1Actor.githubOpenDate, new DateTime()).getDays
+    (for (i <- 0 to days)
+      yield G1Actor.githubOpenDate.withFieldAdded(DurationFieldType.days(), i)).toList
+  }
+
+  private def optimisedChunkSize(listSize: Int): Int = {
+    listSize / G1Actor.availableProcessors
+  }
+
   override def receive: Receive = {
 
     case data: RepositoryData =>
@@ -39,18 +55,19 @@ class G1Actor extends Actor with ActorLogging {
       githhubActor = sender()
       repo = data.repo
 
-      val groupedIssuesIterator = data.issues.grouped( optimisedChunkSize(data.issues.size) ).toList
-      workers = groupedIssuesIterator.length
-      groupedIssuesIterator map (
-        list =>
+      val blocks = datesBetweenGithubOpenDateAndToday.grouped( optimisedChunkSize(datesBetweenGithubOpenDateAndToday.size) ).toList
+      workers = blocks.length
+      val lighterList = getLighterList(data.issues)
+      blocks map (
+        periodChunk =>
           context.actorOf(
             Props[G1Calculator],
-            s"G1Calculator_${groupedIssuesIterator.indexOf(list)}"
-          ) ! G1Data(list,  data.issues)
+            s"G1Calculator_${blocks.indexOf(periodChunk)}"
+          ) ! G1Data(periodChunk,  lighterList)
       )
 
-    case calculatedGraphPoints: mutable.Map[Long, Int] =>
-      this.graphPoints ++= calculatedGraphPoints
+    case computedGraphPoints: Map[Long, Int] =>
+      this.graphPoints = this.graphPoints ++ computedGraphPoints
       workers -= 1
       if (workers == 0) {
         end = System.currentTimeMillis()
@@ -62,12 +79,16 @@ class G1Actor extends Actor with ActorLogging {
 
   }
 
-  private def optimisedChunkSize(listSize: Int): Int = {
-    // La valeur 1000 ici est arbitraire, issue de l'expérience.
-    listSize < 1000 match {
-      case true => listSize
-      case false => listSize / (2 * G1Actor.availableProcessor)
-    }
+  private def getLighterList(issues: List[JsObject]): List[LightIssue] = {
+    (issues map {
+      issue =>
+        val created_at = new DateTime((issue \ "created_at").asInstanceOf[JsString].value)
+        val closed_at = issue \ "closed_at" match {
+          case json: JsString => new DateTime(json.value)
+          case JsNull => null
+        }
+        LightIssue(created_at, closed_at)
+    }).toList
   }
 
 }

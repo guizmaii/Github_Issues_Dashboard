@@ -55,7 +55,7 @@ class GithubTradeActor extends AbstractGithubActor {
 
       log.debug(s"Next Repo : ${GithubTradeActor.githubApiUrl}/${repo.owner}/${repo.name}")
 
-      g1Calculator = context.actorOf(Props[G1Actor], "G1Calculator")
+      g1Calculator = context.actorOf(Props[G1Actor], "G1_Actor")
 
       this.repository = repo
 
@@ -110,25 +110,20 @@ class GithubTradeActor extends AbstractGithubActor {
   private def handleSuccessResponse(response: HttpResponse): Unit = {
     childrenResponses = childrenResponses + (1 -> convertResponseToJsObjectList(response))
 
-    response.headers find { _.lowercaseName == "link" }  match {
-
-      case linkHeader: Option[HttpHeader] =>
-        val parsedLinkHeader = parseLinkHeader(linkHeader.get.value)
-        parsedLinkHeader.get("last") map {
-
-          case lastLink: String =>
+    response.headers exists { _.lowercaseName == "link" }  match {
+      case false => sendDataToCalculator()
+      case true =>
+        val linkHeader = (response.headers find { _.lowercaseName == "link" }).get
+        val parsedLinkHeader = parseLinkHeader(linkHeader.value)
+        parsedLinkHeader.get("last") match {
+          case None => sendDataToCalculator()
+          case lastLink: Some[String] =>
             val next = getPageIndexFromLink(parsedLinkHeader.get("next").get)
-            nbPage = getPageIndexFromLink(lastLink)
+            nbPage = getPageIndexFromLink(lastLink.get)
             for (i <- next to nbPage) {
-              context.actorOf(Props[GithubSingleGetterActor], s"getter_$i") ! constructLink(lastLink, i)
+              context.actorOf(Props[GithubSingleGetterActor], s"getter_$i") ! constructLink(lastLink.get, i)
             }
-
-          case _ =>
-            sendDataToCalculator()
         }
-
-      case _ =>
-        sendDataToCalculator()
     }
   }
 
