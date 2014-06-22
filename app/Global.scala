@@ -2,6 +2,7 @@ import actors.StartOrder
 import play.api._
 import play.api.libs.concurrent.Akka
 import services.TheGreatDispatcher
+import scala.concurrent.duration._
 
 object Global extends GlobalSettings {
 
@@ -10,7 +11,6 @@ object Global extends GlobalSettings {
 
     import play.api.Play.current
     import play.api.libs.concurrent.Execution.Implicits._
-    import scala.concurrent.duration._
 
     // Lance la Matrix d'actualisation du cache des données pour les graphs toutes les heures,
     // à partir de maintenant.
