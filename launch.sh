@@ -1,13 +1,17 @@
 #!/bin/sh
 
-cat /var/run/redis.pid | kill
+# Relancement de Redis
+sudo kill -TERM $(cat /var/run/redis.pid)
 redis-server conf/redis/redis.prod.conf &
 
+# Sauvegarde des logs de l'ancienne application
 mkdir ../loglog/"$(date +'%d-%m-%Y')"/
 sudo cp github_issues_dashboard-1.0-SNAPSHOT/logs/application.log ../loglog/"$(date +'%d-%m-%Y')"/
 
+# Suppression du code compilé de l'ancienne application
 sudo rm -rf github_issues_dashboard-1.0-SNAPSHOT/
 
+# Restart la nouvelle application
 ./activator play-update-secret
 ./activator clean universal:package-zip-tarball
 tar zxvf target/universal/*.tgz
