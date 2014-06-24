@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Relancement de Redis
-sudo kill $(cat /var/run/redis.pid)
-redis-server conf/redis/redis.prod.conf &
+redis-server stop
+redis-server start conf/redis/redis.prod.conf &
 
 # Sauvegarde des logs de l'ancienne application
 mkdir ../loglog/"$(date +'%d-%m-%Y/%T')"/
