@@ -5,7 +5,7 @@ sudo kill -TERM $(cat /var/run/redis.pid)
 redis-server conf/redis/redis.prod.conf &
 
 # Sauvegarde des logs de l'ancienne application
-mkdir ../loglog/"$(date +'%d-%m-%Y')"/
+mkdir ../loglog/"$(date +'%d-%m-%Y/%T')"/
 sudo cp github_issues_dashboard-1.0-SNAPSHOT/logs/application.log ../loglog/"$(date +'%d-%m-%Y')"/
 
 # Suppression du code compilé de l'ancienne application
