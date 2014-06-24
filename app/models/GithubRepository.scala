@@ -8,12 +8,12 @@ case class GithubRepository(id: Option[Long],
                 issuesNumber: Int)
 
 
-class GithubRepositoryTable(tag: Tag) extends Table[GithubRepository](tag, "githubRepos") {
+class GithubRepositoryTable(tag: Tag) extends Table[GithubRepository](tag, "REPOS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def owner = column[String]("owner", O.NotNull)
-  def name = column[String]("name", O.NotNull)
-  def issuesNumber = column[Int]("issuesNumber")
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+  def owner = column[String]("OWNER", O.NotNull)
+  def name = column[String]("NAME", O.NotNull)
+  def issuesNumber = column[Int]("ISSUESNUMBER")
 
   def * = (id.?, owner, name, issuesNumber) <> (GithubRepository.tupled, GithubRepository.unapply)
 }
