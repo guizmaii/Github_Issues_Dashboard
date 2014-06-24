@@ -3,7 +3,7 @@
 cat /var/run/redis.pid | kill
 redis-server conf/redis/redis.prod.conf &
 
-sudo cp github_issues_dashboard-1.0-SNAPSHOT/logs/* "$(date)"/
+sudo cp github_issues_dashboard-1.0-SNAPSHOT/logs/* "$(date +'%d-%m-%Y')"/
 
 sudo rm -rf github_issues_dashboard-1.0-SNAPSHOT/
 
