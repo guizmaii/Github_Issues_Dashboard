@@ -3,7 +3,9 @@
 cat /var/run/redis.pid | kill
 redis-server conf/redis/redis.prod.conf &
 
-rm -rf github_issues_dashboard-1.0-SNAPSHOT/
+sudo cp github_issues_dashboard-1.0-SNAPSHOT/logs/* "$(date)"/
+
+sudo rm -rf github_issues_dashboard-1.0-SNAPSHOT/
 
 ./activator play-update-secret
 ./activator clean universal:package-zip-tarball
