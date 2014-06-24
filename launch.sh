@@ -14,4 +14,4 @@ tar zxvf target/universal/*.tgz
 
 cd github_issues_dashboard-1.0-SNAPSHOT/
 
-sudo ./bin/github_issues_dashboard -mem 8192 -J-server -J-javaagent:/home/Jules/newrelic/newrelic.jar -DapplyEvolutions.default=true -Dhttp.port=80
+sudo ./bin/github_issues_dashboard -mem 8192 -J-server -J-javaagent:/home/Jules/newrelic/newrelic.jar -DapplyEvolutions.default=true -Dhttp.port=80 &
