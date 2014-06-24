@@ -8,7 +8,7 @@ case class GithubRepository(id: Option[Long],
                 issuesNumber: Int)
 
 
-class GithubRepositoryTable(tag: Tag) extends Table[GithubRepository](tag, "GITHUB_REPOS") {
+class GithubRepositoryTable(tag: Tag) extends Table[GithubRepository](tag, "githubRepos") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def owner = column[String]("owner", O.NotNull)
