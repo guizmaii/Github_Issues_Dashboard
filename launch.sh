@@ -5,8 +5,9 @@ redis-cli shutdown
 redis-server conf/redis/redis.prod.conf &
 
 # Sauvegarde des logs de l'ancienne application
-mkdir ../loglog/"$(date +'%d-%m-%Y/%T')"/
-sudo cp github_issues_dashboard-1.0-SNAPSHOT/logs/application.log ../loglog/"$(date +'%d-%m-%Y')"/
+date="$(date +'%d-%m-%Y/%T')"
+mkdir ../loglog/$date/
+sudo cp github_issues_dashboard-1.0-SNAPSHOT/logs/application.log ../loglog/$date/
 
 # Suppression du code compilé de l'ancienne application
 sudo rm -rf github_issues_dashboard-1.0-SNAPSHOT/
