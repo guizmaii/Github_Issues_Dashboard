@@ -5,7 +5,7 @@ redis-cli shutdown
 redis-server conf/redis/redis.prod.conf &
 
 # Sauvegarde des logs de l'ancienne application
-date="$(date +'%d-%m-%Y/%T')"
+date="$(date +'%d-%m-%Y-%T')"
 mkdir ../loglog/$date/
 sudo cp github_issues_dashboard-1.0-SNAPSHOT/logs/application.log ../loglog/$date/
 
