@@ -47,7 +47,7 @@ object Redis {
     }
 
   private def g4Set(state: String, occurences: Int)(implicit redis: RedisClient) =
-    redis.hget(g4Key, state) match {
+    redis.hget[String](g4Key, state) match {
       case None => redis.hset(g4Key, state, occurences)
       case value: Some[String] => redis.hset(g4Key, state, value.get.toInt + occurences)
     }
