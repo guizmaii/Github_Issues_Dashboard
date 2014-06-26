@@ -6,7 +6,7 @@ import domain.{G1Type, GraphType}
 import models.GithubRepository
 import org.joda.time.{DateTime, Days, DurationFieldType}
 import play.api.libs.json._
-import services.RedisClient
+import redis.RedisActorSingleton
 
 case class G1ComputedData(repo: GithubRepository, computedData: Map[Long, Int], graphType: GraphType = G1Type)
 
@@ -67,7 +67,7 @@ class G1Actor extends Actor with ActorLogging {
         end = System.currentTimeMillis()
         log.debug("Temps de calcul : " + ((end - begin) / 1000) + " secondes")
 
-        RedisClient.getInstance ! G1ComputedData(repo, graphPoints)
+        RedisActorSingleton.instance ! G1ComputedData(repo, graphPoints)
         githhubActor ! CalculationFinishedEvent()
       }
 

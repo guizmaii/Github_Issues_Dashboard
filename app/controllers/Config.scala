@@ -6,7 +6,7 @@ import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.db.slick._
 import play.api.mvc._
-import services.{GithubRepositoryUrlService, TheGreatDispatcher}
+import services.{GithubRepositoryUrlService, TheGreatDispatcherSingleton}
 import views.html
 
 case class UserRepoUrl(url: String)
@@ -42,12 +42,13 @@ object Config extends Controller {
         repoUrl => {
           val githubRepo = GithubRepositoryUrlService.parseUrl(repoUrl.url)
           GithubRepositoryDAO.insert(githubRepo)
-          TheGreatDispatcher.getInstance ! githubRepo
+          TheGreatDispatcherSingleton.instance ! githubRepo
           Redirect(routes.Config.create()).flashing("success" -> "Dépôt ajouté avec succés")
         }
       )
   }
 
+  // TODO : Ajouter la suppression des données dans Redis
   def delete(id: Long) = DBAction {
     implicit rs =>
       GithubRepositoryDAO.delete(id)

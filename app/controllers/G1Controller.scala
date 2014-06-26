@@ -1,12 +1,11 @@
 package controllers
 
-import domain.G1Type
 import models.{GithubRepository, GithubRepositoryDAO}
 import play.api.db.slick._
 import play.api.libs.json._
 import play.api.mvc._
+import redis.Redis
 import spray.json._
-import traits.SyncRedisClient
 
 import scala.collection.immutable.TreeMap
 
@@ -16,20 +15,22 @@ object G1JsonProtocol extends DefaultJsonProtocol {
   implicit val g1Format = jsonFormat2(G1Json)
 }
 
-object G1Controller extends Controller with SyncRedisClient {
+object G1Controller extends Controller {
 
-  import com.redis.serialization.Parse.Implicits._
   import controllers.G1JsonProtocol._
 
   def getAll = DBAction {
     implicit rs =>
       val data = GithubRepositoryDAO.getAll map {
         implicit repo: GithubRepository =>
-          val data = redisPool.withClient {
-            client =>
-              client.hgetall[Long, Int](getG1RedisKey(repo.owner, repo.name, G1Type))
-          }
-          G1Json(repo.name, MapToArrayOfArrayOfLong(sortData(data.get)))
+          G1Json(
+            repo.name,
+            MapToArrayOfArrayOfLong(
+              sortData(
+                Redis.g1Get(repo)
+              )
+            )
+          )
       }
       // TODO : Find a way to not parse twice to JSON.
       Ok(Json.parse(data.toJson.compactPrint))

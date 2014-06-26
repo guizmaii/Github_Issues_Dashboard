@@ -1,9 +1,8 @@
 package controllers
 
 import play.api.mvc._
-import traits.SyncRedisClient
 
-object G3Controller extends Controller with SyncRedisClient {
+object G3Controller extends Controller {
 
   def getAll = Action {
     NotImplemented
