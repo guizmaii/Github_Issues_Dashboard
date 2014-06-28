@@ -23,25 +23,13 @@ object G1Controller extends Controller {
     implicit rs =>
       val data = GithubRepositoryDAO.getAll map {
         repo: GithubRepository =>
-          G1Json( repo.name, getFormatedDataForJS(G1Redis.get(repo)) )
+          G1Json( repo.name, getFormatedDataForJS( G1Redis.get(repo) ))
       }
       // TODO : Find a way to not parse twice to JSON.
       Ok(Json.parse(data.toJson.compactPrint))
   }
 
-  private def getFormatedDataForJS(data : Map[Long, Int]): Array[Array[Long]] = {
-    MapToArrayOfArrayOfLong(
-      sortData(
-        data
-      )
-    )
-  }
-
-  private def sortData(data: Map[Long, Int]): TreeMap[Long, Int] = {
-    TreeMap[Long, Int]() ++ ( for(t <- data) yield t._1 -> t._2 )
-  }
-
-  private def MapToArrayOfArrayOfLong(data: Map[Long, Int]): Array[Array[Long]] = {
+  private def getFormatedDataForJS(data: Map[Long, Int]): Array[Array[Long]] = {
     data.toArray map {
       t =>
         Array(t._1, t._2)
