@@ -1,15 +1,17 @@
 package controllers
 
+import models.GithubRepositoryDAO
 import play.api.Routes
+import play.api.db.slick._
 import play.api.mvc._
 
 object Application extends Controller {
 
-  //  TODO : Tester à l'ajout du dépot dans le system si celui-ci gére des issues
+  //  TODO : Tester à l'ajout du dépot dans le system si celui-ci ne gére pas les issues
 
-  def index = Action {
+  def index = DBAction {
     implicit rs =>
-      Ok(views.html.index())
+      Ok(views.html.index(GithubRepositoryDAO.getAllNonAlreadyFetched))
   }
 
   // -- Javascript routing

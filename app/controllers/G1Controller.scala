@@ -22,7 +22,7 @@ object G1Controller extends Controller {
   def getAll = DBAction {
     implicit rs =>
       val minDate = G1Redis.getOldestIssueCreationDate
-      val data = GithubRepositoryDAO.getAll map {
+      val data = GithubRepositoryDAO.getAllFetched map {
         repo: GithubRepository =>
           G1Json( repo.name, getFormatedDataForJS( G1Redis.get(repo).filter( _._1 >= minDate ) ))
       }

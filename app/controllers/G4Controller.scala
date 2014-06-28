@@ -19,7 +19,7 @@ object G4Controller extends Controller {
 
   def getAll = DBAction {
     implicit rs =>
-      val data: List[G4Json] = getFormatedForJs( G4Redis getAll GithubRepositoryDAO.getAll )
+      val data: List[G4Json] = getFormatedForJs( G4Redis getAll GithubRepositoryDAO.getAllFetched )
       Ok(Json.parse(data.toJson.compactPrint))
   }
 

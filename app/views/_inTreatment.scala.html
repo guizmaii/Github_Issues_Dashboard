@@ -1,0 +1,22 @@
+@(nonAlreadyFetchedRepos: List[models.GithubRepository])
+
+@import services.GithubRepositoryUrlService
+
+@if(nonAlreadyFetchedRepos.nonEmpty) {
+
+    <div class="panel panel-danger">
+        <div class="panel-heading">
+            <h3 class="panel-title">Dépôts en traitement</h3>
+            <small>Rafraichissez votre page pour obtenir les nouvelles données lorsqu'elles seront prêtes</small>
+        </div>
+        <div class="panel-body">
+            <ul>
+            @for(repo <- nonAlreadyFetchedRepos) {
+                <li><a href="@GithubRepositoryUrlService.getUrl(repo)">@GithubRepositoryUrlService.getUrl(repo)</a></li>
+            }
+            </ul>
+        </div>
+    </div>
+
+}
+

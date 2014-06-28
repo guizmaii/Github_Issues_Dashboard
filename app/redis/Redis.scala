@@ -21,4 +21,9 @@ abstract class Redis {
 
   def key(repo: GithubRepository): String
 
+  def delete(repo: GithubRepository) =
+    Redis.pool.withClient {
+      _.del(key(repo))
+    }
+
 }

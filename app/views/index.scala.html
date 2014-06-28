@@ -1,8 +1,10 @@
-@()(implicit flash: Flash)
+@(nonAlreadyFetchedRepos: List[models.GithubRepository])(implicit flash: Flash)
 
 @main("Github Dashboard") {
 
     <h1 class="page-header">Dashboard</h1>
+
+    @_inTreatment(nonAlreadyFetchedRepos)
 
     <div id="g1">
         <svg></svg>

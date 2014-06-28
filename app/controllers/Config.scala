@@ -1,11 +1,13 @@
 package controllers
 
+import actors.DeleteOrder
 import models.GithubRepositoryDAO
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.db.slick._
 import play.api.mvc._
+import redis.RedisActorSingleton
 import services.{GithubRepositoryUrlService, TheGreatDispatcherSingleton}
 import views.html
 
@@ -48,10 +50,12 @@ object Config extends Controller {
       )
   }
 
-  // TODO : Ajouter la suppression des données dans Redis
   def delete(id: Long) = DBAction {
     implicit rs =>
+      // Attention l'ordre des opérations est imporant ici
+      val repo = GithubRepositoryDAO.get(id)
       GithubRepositoryDAO.delete(id)
+      RedisActorSingleton.instance ! DeleteOrder( repo )
       Redirect(routes.Config.create()).flashing("success" -> "Dépôt supprimé avec succées")
   }
 }

@@ -11,7 +11,7 @@ object GithubRepositoryUrlService {
   def parseUrl(url: String): GithubRepository = {
     val repoInfos = url.split(s"$githubUrl/")(1).split("/")
     // TODO : Aller chercher le nb d'issues du dépot
-    GithubRepository(None, repoInfos(0), repoInfos(1), 0)
+    GithubRepository(None, repoInfos(0), repoInfos(1))
   }
 
   def getUrl(repo: GithubRepository): String = {
