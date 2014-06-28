@@ -22,24 +22,18 @@ object GithubRepositoryDAO {
 
   private val repos = TableQuery[GithubRepositoryTable]
 
-  def getAll(implicit s: Session): List[GithubRepository] = {
-    repos.list()
-  }
+  def get(id: Long)(implicit s: Session): GithubRepository = repos.where(_.id === id).first
 
-  def insert(repo: GithubRepository)(implicit s: Session): Int = {
-    repos insert repo
-  }
+  def getAll(implicit s: Session): List[GithubRepository] = repos.list()
 
-  def delete(id: Long)(implicit s: Session) = {
-    repos.where(_.id === id).delete
-  }
+  def insert(repo: GithubRepository)(implicit s: Session): Int = repos insert repo
+
+  def delete(id: Long)(implicit s: Session): Int = repos.where(_.id === id).delete
 
   def exists(repo: GithubRepository)(implicit s: Session): Boolean = {
     repos.where(_.name === repo.name).where(_.owner === repo.owner).exists.run
   }
 
-  def notExists(repo: GithubRepository)(implicit s: Session): Boolean = {
-    !  exists(repo)
-  }
+  def notExists(repo: GithubRepository)(implicit s: Session): Boolean = ! exists(repo)
 
 }
