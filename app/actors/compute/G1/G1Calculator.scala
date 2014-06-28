@@ -1,6 +1,7 @@
 package actors.compute.G1
 
 import akka.actor.Actor
+import helpers.TimeHelper
 import org.joda.time.DateTime
 
 class G1Calculator extends Actor {
@@ -10,12 +11,10 @@ class G1Calculator extends Actor {
     case g1Data: G1Data =>
       sender ! (g1Data.periodChunk map {
         date =>
-          jodaDateTimeToTimestamp(date) -> g1Data.lightIssues.count(isOpenAtThisDate(_, date))
+          TimeHelper.dateTimeToTimestamp(date) -> g1Data.lightIssues.count(isOpenAtThisDate(_, date))
       }).toMap[Long, Int]
 
   }
-
-  private def jodaDateTimeToTimestamp(date: DateTime) = date.toDate.getTime
 
   private def isOpenAtThisDate(issue: LightIssue, date: DateTime): Boolean = {
     isCreatedBeforeOrAtTheSameDate(issue.created_at, date) && isClosedAfter(issue.closed_at, date)
