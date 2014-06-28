@@ -79,7 +79,7 @@ class GithubTradeActor extends AbstractGithubActor {
 
     case cfe: CalculationFinishedEvent =>
       nbCalculator -= 1
-      if (allCalculatorsHasFinished) {
+      if (allCalculatorsHaveFinished) {
         end = System.currentTimeMillis()
         log.debug("Temps de total (récupération des données + calcul) : " + ((end - begin) / 1000) + " secondes")
         context.stop(self)
@@ -87,7 +87,7 @@ class GithubTradeActor extends AbstractGithubActor {
 
   }
 
-  def allCalculatorsHasFinished: Boolean = {
+  def allCalculatorsHaveFinished: Boolean = {
     nbCalculator == 0
   }
 
