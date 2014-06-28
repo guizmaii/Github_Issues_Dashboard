@@ -34,10 +34,10 @@ object G4Controller extends Controller {
     var res = Map[String, Int]()
     mapList map {
       states =>
-        res = res ++ (states map {
+        states map {
           tuple =>
-            tuple._1 -> (res.getOrElse(tuple._1, 0) + tuple._2.asInstanceOf[Int])
-        }).toMap[String, Int]
+            res = res + (tuple._1 -> (res.getOrElse(tuple._1, 0) + tuple._2.asInstanceOf[Int]))
+        }
     }
     res
   }
