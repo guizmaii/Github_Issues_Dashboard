@@ -1,5 +1,6 @@
 package actors.github
 
+import akka.actor.ActorRef
 import play.api.libs.concurrent.Akka
 import spray.client.pipelining._
 import spray.http._
@@ -15,6 +16,8 @@ class GithubSingleGetterActor extends AbstractGithubActor {
   implicit val system = Akka.system
   import system.dispatcher // execution context for futures
 
+  private var theSender: ActorRef = null
+
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 
   private val selfId: Int = self.path.name.split("_")(1).toInt
@@ -24,9 +27,13 @@ class GithubSingleGetterActor extends AbstractGithubActor {
     case link: String =>
       log.debug(s"Next link : ${getPageIndexFromLink(link)}")
 
+      // Je suis obligé de faire une sauvegarde du sender ici, sinon je perds sa référence
+      // et ne peut donc plus l'utiliser dans le onComplete ci-dessous.
+      theSender = sender()
+
       pipeline(Get(link)) onComplete {
         case Success(response) =>
-          sender ! (selfId -> convertResponseToJsObjectList(response))
+          theSender ! (selfId -> convertResponseToJsObjectList(response))
 
         case Failure(error) =>
           handleFailureResponse(error)
