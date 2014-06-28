@@ -21,15 +21,16 @@ object G1Controller extends Controller {
 
   def getAll = DBAction {
     implicit rs =>
+      val minDate = G1Redis.getOldestIssueCreationDate
       val data = GithubRepositoryDAO.getAll map {
         repo: GithubRepository =>
-          G1Json( repo.name, getFormatedDataForJS( G1Redis.get(repo) ))
+          G1Json( repo.name, getFormatedDataForJS( G1Redis.get(repo).filter( _._1 >= minDate ) ))
       }
       // TODO : Find a way to not parse twice to JSON.
       Ok(Json.parse(data.toJson.compactPrint))
   }
 
-  private def getFormatedDataForJS(data: Map[Long, Int]): Array[Array[Long]] = {
+  private def getFormatedDataForJS(data: TreeMap[Long, Int]): Array[Array[Long]] = {
     data.toArray map {
       t =>
         Array(t._1, t._2)

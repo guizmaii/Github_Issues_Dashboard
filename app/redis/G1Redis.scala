@@ -1,7 +1,8 @@
 package redis
 
-import actors.compute.G1.G1ComputedData
+import actors.compute.G1.{G1Actor, G1ComputedData}
 import domain.G1Type
+import helpers.TimeHelper
 import models.GithubRepository
 
 import scala.collection.immutable.TreeMap
@@ -9,6 +10,8 @@ import scala.collection.immutable.TreeMap
 object G1Redis extends Redis {
 
   override def key(repo: GithubRepository): String = abstractKey(repo, G1Type)
+
+  val OLDEST_ISSUE_DATE_KEY = "oldestIssueDatekey"
 
   import com.redis.serialization.Parse.Implicits._
 
@@ -35,6 +38,16 @@ object G1Redis extends Redis {
   def setAll(g1Data: G1ComputedData): Boolean =
     Redis.pool.withClient {
       _.hmset(key(g1Data.repo), g1Data.computedData)
+    }
+
+  def getOldestIssueCreationDate: Long =
+    Redis.pool.withClient(
+      _.get[Long](OLDEST_ISSUE_DATE_KEY).getOrElse(TimeHelper.dateTimeToTimestamp(G1Actor.githubOpenDate))
+    )
+
+  def setOldestIssueCreationDate(oldestIssueDate: Long): Boolean =
+    Redis.pool.withClient {
+      _.set(OLDEST_ISSUE_DATE_KEY, oldestIssueDate)
     }
 
 }
