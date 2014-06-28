@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Relancement de Redis
-redis-cli shutdown
+sudo killall redis
 redis-server conf/redis/redis.prod.conf &
 
 # Sauvegarde des logs de l'ancienne application
