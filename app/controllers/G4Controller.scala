@@ -1,6 +1,6 @@
 package controllers
 
-import models.{GithubRepositoryDAO, GithubRepository}
+import models.GithubRepositoryDAO
 import play.api.db.slick._
 import play.api.libs.json._
 import play.api.mvc._

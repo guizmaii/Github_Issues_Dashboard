@@ -1,6 +1,5 @@
 package actors.github
 
-import akka.actor.ActorRef
 import play.api.libs.concurrent.Akka
 import spray.client.pipelining._
 import spray.http._
