@@ -65,7 +65,6 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
     eventBus: EventBus,
     credentialsProvider: CredentialsProvider,
     facebookProvider: FacebookProvider,
-    googleProvider: GoogleProvider,
     twitterProvider: TwitterProvider): Environment[User, CachedCookieAuthenticator] = {
 
     Environment[User, CachedCookieAuthenticator](
@@ -74,7 +73,6 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
       Map(
         credentialsProvider.id -> credentialsProvider,
         facebookProvider.id -> facebookProvider,
-        googleProvider.id -> googleProvider,
         twitterProvider.id -> twitterProvider
       ),
       eventBus
@@ -162,24 +160,6 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
       clientID = Play.configuration.getString("silhouette.facebook.clientID").get,
       clientSecret = Play.configuration.getString("silhouette.facebook.clientSecret").get,
       scope = Play.configuration.getString("silhouette.facebook.scope")))
-  }
-
-  /**
-   * Provides the Google provider.
-   *
-   * @param cacheLayer The cache layer implementation.
-   * @param httpLayer The HTTP layer implementation.
-   * @return The Google provider.
-   */
-  @Provides
-  def provideGoogleProvider(cacheLayer: CacheLayer, httpLayer: HTTPLayer): GoogleProvider = {
-    GoogleProvider(cacheLayer, httpLayer, OAuth2Settings(
-      authorizationURL = Play.configuration.getString("silhouette.google.authorizationURL").get,
-      accessTokenURL = Play.configuration.getString("silhouette.google.accessTokenURL").get,
-      redirectURL = Play.configuration.getString("silhouette.google.redirectURL").get,
-      clientID = Play.configuration.getString("silhouette.google.clientID").get,
-      clientSecret = Play.configuration.getString("silhouette.google.clientSecret").get,
-      scope = Play.configuration.getString("silhouette.google.scope")))
   }
 
   /**
