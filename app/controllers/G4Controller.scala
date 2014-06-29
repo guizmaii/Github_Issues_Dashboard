@@ -15,7 +15,7 @@ object G4JsonProtocol extends DefaultJsonProtocol {
 
 object G4Controller extends Controller {
 
-  import controllers.G4JsonProtocol._
+  import G4JsonProtocol._
 
   def getAll = DBAction {
     implicit rs =>

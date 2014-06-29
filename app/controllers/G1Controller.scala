@@ -17,14 +17,14 @@ object G1JsonProtocol extends DefaultJsonProtocol {
 
 object G1Controller extends Controller {
 
-  import controllers.G1JsonProtocol._
+  import G1JsonProtocol._
 
   def getAll = DBAction {
     implicit rs =>
-      val minDate = G1Redis.getOldestIssueCreationDate
+      val oldestIssueCreationDate = G1Redis.getOldestIssueCreationDate
       val data = GithubRepositoryDAO.getAllFetched map {
         repo: GithubRepository =>
-          G1Json( repo.name, getFormatedDataForJS( G1Redis.get(repo).filter( _._1 >= minDate ) ))
+          G1Json( repo.name, getFormatedDataForJS( G1Redis.get(repo).filter( _._1 >= oldestIssueCreationDate ) ))
       }
       // TODO : Find a way to not parse twice to JSON.
       Ok(Json.parse(data.toJson.compactPrint))

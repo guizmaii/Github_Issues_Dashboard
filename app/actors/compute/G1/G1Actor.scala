@@ -2,26 +2,17 @@ package actors.compute.G1
 
 import actors.github.{CalculationFinishedEvent, RepositoryData}
 import akka.actor._
-import domain.{G1Type, GraphType}
+import helpers.TimeHelper
 import models.GithubRepository
 import org.joda.time.{DateTime, Days, DurationFieldType}
 import play.api.libs.json._
 import redis.RedisActorSingleton
 
-case class G1ComputedData(repo: GithubRepository, computedData: Map[Long, Int], graphType: GraphType = G1Type)
+case class G1ComputedData(repo: GithubRepository, computedData: Map[Long, Int])
 
 private case class LightIssue(created_at: DateTime, closed_at: DateTime)
 
 private case class G1Data(periodChunk: List[DateTime], lightIssues: List[LightIssue])
-
-object G1Actor {
-
-  val availableProcessors: Int = Runtime.getRuntime.availableProcessors
-
-  // Date de lancement de Github (voir Wikipedia) : 01/04/2008
-  // Ce sera notre année 0 en qq sorte ou encore, pour les informaticiens, cela équivaut au 01/01/1970 du temps Posix.
-  val githubOpenDate = new DateTime(2008, 4, 1, 0, 0)
-}
 
 class G1Actor extends Actor with ActorLogging {
 
@@ -36,9 +27,9 @@ class G1Actor extends Actor with ActorLogging {
   var githhubActor: ActorRef = null
 
   private val daysBetweenGithubOpenDateAndToday: List[DateTime] = {
-    val days: Int = Days.daysBetween(G1Actor.githubOpenDate, new DateTime()).getDays
+    val days: Int = Days.daysBetween(TimeHelper.githubOpenDate, new DateTime()).getDays
     (for (i <- 0 to days)
-      yield G1Actor.githubOpenDate.withFieldAdded(DurationFieldType.days, i)).toList
+      yield TimeHelper.githubOpenDate.withFieldAdded(DurationFieldType.days, i)).toList
   }
 
   override def receive: Receive = {
@@ -78,7 +69,7 @@ class G1Actor extends Actor with ActorLogging {
   }
 
   private def optimisedChunkSize(listSize: Int): Int = {
-    listSize / G1Actor.availableProcessors
+    listSize / Runtime.getRuntime.availableProcessors
   }
 
   private def getLighterList(issues: List[JsObject]): List[LightIssue] = {

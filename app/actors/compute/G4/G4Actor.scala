@@ -2,12 +2,11 @@ package actors.compute.G4
 
 import actors.github.{CalculationFinishedEvent, RepositoryData}
 import akka.actor.{Actor, ActorLogging}
-import domain.{G4Type, GraphType}
 import models.GithubRepository
 import play.api.libs.json.JsString
 import redis.RedisActorSingleton
 
-case class G4ComputedData(repo: GithubRepository, computedData: Map[String, Int], graphType: GraphType = G4Type)
+case class G4ComputedData(repo: GithubRepository, computedData: Map[String, Int])
 
 class G4Actor extends Actor with ActorLogging {
 

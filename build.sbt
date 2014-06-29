@@ -25,5 +25,8 @@ libraryDependencies ++= Seq(
   "org.webjars" % "d3js" % "3.4.8",
   "org.webjars" % "nvd3" % "1.1.15-beta",
   "org.webjars" % "sugar" % "1.4.1",
-  "org.webjars" % "font-awesome" % "4.1.0"
+  "org.webjars" % "font-awesome" % "4.1.0",
+  "org.webjars" % "momentjs" % "2.7.0",
+  "org.webjars" % "underscorejs" % "1.6.0", // Needed by moment-duration-format
+  "org.webjars" % "lodash" % "2.4.1" // Needed by moment-duration-format
 )

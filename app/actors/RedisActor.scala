@@ -1,13 +1,14 @@
 package actors
 
 import actors.compute.G1.G1ComputedData
+import actors.compute.G2.G2ComputedData
 import actors.compute.G4.G4ComputedData
 import akka.actor.{Actor, ActorLogging}
 import helpers.TimeHelper
 import models.{GithubRepository, GithubRepositoryDAO}
 import org.joda.time.DateTime
 import play.api.db.slick._
-import redis.{G1Redis, G4Redis}
+import redis.{G2Redis, G1Redis, G4Redis}
 
 import scala.collection.immutable.TreeMap
 
@@ -27,6 +28,10 @@ class RedisActor extends Actor with ActorLogging {
       DB.withTransaction( implicit t => GithubRepositoryDAO.markAsFetched(g1Data.repo) )
       G1Redis setOldestIssueCreationDate oldestIssueCreationDateMinusTwoDays
 
+    case g2Data: G2ComputedData =>
+      log.debug(s"G2 reçu : ${g2Data.repo}")
+      G2Redis set g2Data
+
     case g4Data: G4ComputedData =>
       log.debug(s"G4 reçu : ${g4Data.repo}")
       G4Redis setAll g4Data
@@ -34,6 +39,7 @@ class RedisActor extends Actor with ActorLogging {
     case order: DeleteOrder =>
       log.debug(s"Delete order reçu : ${order.repo}")
       G1Redis delete order.repo
+      G2Redis delete order.repo
       G4Redis delete order.repo
       G1Redis setOldestIssueCreationDate oldestIssueCreationDateMinusTwoDays
   }

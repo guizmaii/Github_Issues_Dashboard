@@ -1,6 +1,7 @@
 package actors.github
 
 import actors.compute.G1.G1Actor
+import actors.compute.G2.G2Actor
 import actors.compute.G4.G4Actor
 import akka.actor._
 import models.GithubRepository
@@ -35,10 +36,13 @@ class GithubTradeActor extends AbstractGithubActor {
 
   import play.api.Play.current
 
+  private val calculatorsList: List[ActorRef] = List(
+    context.actorOf(Props[G1Actor], "G1_Actor"),
+    context.actorOf(Props[G2Actor], "G2_Actor"),
+    context.actorOf(Props[G4Actor], "G4_Actor")
+  )
 
-  private var nbCalculator = 2 // Nombre d'acteurs de calcul (déclarés ci-dessous)
-  private val g1Calculator: ActorRef = context.actorOf(Props[G1Actor], "G1_Actor")
-  private val g4Calculator: ActorRef = context.actorOf(Props[G4Actor], "G4_Actor")
+  private var nbCalculator = calculatorsList.size
 
   private var repository: GithubRepository = null
   private var childrenResponses = TreeMap[Int, List[JsObject]]()
@@ -148,8 +152,7 @@ class GithubTradeActor extends AbstractGithubActor {
 
   private def sendDataToCalculators(): Unit = {
     val data = RepositoryData(repository, childrenResponses.map(_._2).flatten.toList)
-    g1Calculator ! data
-    g4Calculator ! data
+    calculatorsList map { _ ! data }
   }
 
   /**

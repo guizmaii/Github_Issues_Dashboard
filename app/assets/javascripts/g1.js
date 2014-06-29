@@ -10,7 +10,7 @@ $(document).ready(function () {
                 .y(function(d) { return d[1]; })   //...in case your data is formatted differently.
                 .useInteractiveGuideline(true)    //Tooltips which show all data points. Very nice!
                 .transitionDuration(500)
-                .showControls(false)       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
+                .showControls(true)       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
                 .clipEdge(true);
 
             //Format x-axis labels with custom function.
@@ -21,9 +21,6 @@ $(document).ready(function () {
 
             chart.yAxis
                 .tickFormat(d3.format('d'));
-
-//            chart.width(960);
-            chart.height($("#g1").height());
 
             d3.select('#g1 svg')
                 .datum(data)

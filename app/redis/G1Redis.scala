@@ -42,7 +42,7 @@ object G1Redis extends Redis {
 
   def getOldestIssueCreationDate: Long =
     Redis.pool.withClient(
-      _.get[Long](OLDEST_ISSUE_DATE_KEY).getOrElse(TimeHelper.dateTimeToTimestamp(G1Actor.githubOpenDate))
+      _.get[Long](OLDEST_ISSUE_DATE_KEY).getOrElse(TimeHelper.dateTimeToTimestamp(TimeHelper.githubOpenDate))
     )
 
   def setOldestIssueCreationDate(oldestIssueDate: Long): Boolean =
