@@ -1,9 +1,9 @@
-@(repos: List[GithubRepository])(implicit repoForm: Form[UserRepoUrl], flash: Flash)
+@(repos: List[GithubRepository], user: models.User)(implicit repoForm: Form[UserRepoUrl], flash: Flash)
 
-@import services.GithubRepositoryUrlService._
+@import helpers.GithubRepositoryUrlService._
 @import views.html.helper._
 
-@main("Github Dashboard - Add repository") {
+@main("Github Dashboard - Add repository", Some(user)) {
 
     <h1 class="page-header">Configuration</h1>
 

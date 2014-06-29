@@ -1,6 +1,6 @@
 @(nonAlreadyFetchedRepos: List[models.GithubRepository])
 
-@import services.GithubRepositoryUrlService
+@import helpers.GithubRepositoryUrlService._
 
 @if(nonAlreadyFetchedRepos.nonEmpty) {
 
@@ -12,7 +12,7 @@
         <div class="panel-body">
             <ul>
             @for(repo <- nonAlreadyFetchedRepos) {
-                <li><a href="@GithubRepositoryUrlService.getUrl(repo)">@GithubRepositoryUrlService.getUrl(repo)</a></li>
+                <li><a href="@getUrl(repo)">@getUrl(repo)</a></li>
             }
             </ul>
         </div>
