@@ -3,7 +3,8 @@
 # ~~~~
 
 # Home page
-GET         /                                 controllers.Application.index
+GET         /                                 @controllers.Application.index
+GET         /account                          @controllers.Application.account
 
 # G1
 GET         /g1                               controllers.G1Controller.getAll
@@ -18,15 +19,23 @@ GET         /g3                               controllers.G3Controller.getAll
 GET         /g4                               controllers.G4Controller.getAll
 
 # Repositories
-GET         /config                           controllers.Config.create
-POST        /config                           controllers.Config.save
-POST        /config/:id/delete                controllers.Config.delete(id:Long)
+GET         /config                           @controllers.Config.create
+POST        /config                           @controllers.Config.save
+POST        /config/:id/delete                @controllers.Config.delete(id:Long)
+
+# Silhouette
+GET         /signIn                           @controllers.Application.signIn
+GET         /signUp                           @controllers.Application.signUp
+GET         /signOut                          @controllers.Application.signOut
+GET         /authenticate/:provider           @controllers.SocialAuth.authenticate(provider)
+POST        /authenticate/credentials         @controllers.CredentialsAuth.authenticate
+POST        /signUp                           @controllers.SignUp.signUp
 
 # Webjars routing
 GET         /webjars/*file                    controllers.WebJarAssets.at(file)
 
 # Javascript routing
-GET         /assets/javascripts/routes        controllers.Application.javascriptRoutes
+GET         /assets/javascripts/routes        @controllers.Application.javascriptRoutes
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                     controllers.Assets.at(path="/public", file)

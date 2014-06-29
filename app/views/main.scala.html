@@ -1,4 +1,4 @@
-@(title: String)(content: Html)
+@(title: String, user: Option[models.User] = None)(content: Html)
 
 <!DOCTYPE html>
 
@@ -27,7 +27,7 @@
     </head>
     <body>
 
-        @navbar()
+        @navbar(user)
 
         <div class="container main">
             @content
