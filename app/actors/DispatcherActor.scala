@@ -1,6 +1,6 @@
 package actors
 
-import actors.github.GithubTradeActor
+import actors.github.{GithubEventsTradeActor, GithubIssuesTradeActor}
 import akka.actor.{Actor, ActorLogging, Props}
 import models.{GithubRepository, GithubRepositoryDAO}
 import play.api.db.slick._
@@ -28,7 +28,8 @@ class DispatcherActor extends Actor with ActorLogging {
   }
 
   private def lauchComputation(repo: GithubRepository) {
-    context.actorOf(Props[GithubTradeActor], s"${repo.owner}_${repo.name}_actor") ! repo
+    context.actorOf(Props[GithubIssuesTradeActor], s"${repo.owner}_${repo.name}_issues_actor") ! repo
+    context.actorOf(Props[GithubEventsTradeActor], s"${repo.owner}_${repo.name}_events_actor") ! repo
   }
 
 }

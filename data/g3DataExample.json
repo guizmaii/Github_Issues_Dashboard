@@ -1,0 +1,41 @@
+[
+    {
+        "key": "Tata",
+        "values": [
+            {
+                "x": "Play",
+                "y": 0
+            },
+            {
+                "x": "Scala",
+                "y": 42
+            }
+        ]
+    },
+    {
+        "key": "Jules",
+        "values": [
+            {
+                "x": "Play",
+                "y": 12
+            },
+            {
+                "x": "Scala",
+                "y": 25
+            }
+        ]
+    },
+    {
+        "key": "Toto",
+        "values": [
+            {
+                "x": "Play",
+                "y": 12
+            },
+            {
+                "x": "Scala",
+                "y": 25
+            }
+        ]
+    }
+]
