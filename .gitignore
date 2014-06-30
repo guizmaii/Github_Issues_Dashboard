@@ -17,3 +17,4 @@ conf/github.conf
 conf/redis/stdout
 conf/redis/dump.rdb
 conf/database.conf
+conf/silhouette.prod.conf
