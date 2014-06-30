@@ -14,6 +14,8 @@ $(document).ready(function () {
                 .transition().duration(1200)
                 .call(chart);
 
+            nv.utils.windowResize(chart.update);
+
             return chart;
         });
     });
