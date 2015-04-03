@@ -19,16 +19,9 @@ object G2Controller extends Controller {
 
   import G2JsonProtocol._
 
-  def getAll = DBAction {
-    implicit rs =>
-      val g2Json = G2Json(
-        "Projects velocity",
-        GithubRepositoryDAO.getAllFetched map {
-          repo =>
-            G2Value(repo.name, G2Redis get repo)
-        }
-      )
-      Ok(Json.parse(List(g2Json).toJson.compactPrint))
+  def getAll = DBAction { implicit rs =>
+    val data = GithubRepositoryDAO.getAllFetched map { repo => G2Value(repo.name, G2Redis get repo) }
+    Ok(Json.parse(List(G2Json("Projects velocity", data)).toJson.compactPrint))
   }
 
 }
