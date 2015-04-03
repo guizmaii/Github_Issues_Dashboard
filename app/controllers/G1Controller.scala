@@ -19,22 +19,15 @@ object G1Controller extends Controller {
 
   import G1JsonProtocol._
 
-  def getAll = DBAction {
-    implicit rs =>
-      val oldestIssueCreationDate = G1Redis.getOldestIssueCreationDate
-      val data = GithubRepositoryDAO.getAllFetched map {
-        repo: GithubRepository =>
-          G1Json( repo.name, getFormatedDataForJS( G1Redis.get(repo).filter( _._1 >= oldestIssueCreationDate ) ))
-      }
-      // TODO : Find a way to not parse twice to JSON.
-      Ok(Json.parse(data.toJson.compactPrint))
+  def getAll = DBAction { implicit rs =>
+    val data = GithubRepositoryDAO.getAllFetched map { repo: GithubRepository =>
+      G1Json(repo.name, getFormatedDataForJS(G1Redis.get(repo).filter(_._1 >= G1Redis.getOldestIssueCreationDate)))
+    }
+    // TODO : Find a way to not parse twice to JSON.
+    Ok(Json.parse(data.toJson.compactPrint))
   }
 
-  private def getFormatedDataForJS(data: TreeMap[Long, Int]): Array[Array[Long]] = {
-    data.toArray map {
-      t =>
-        Array(t._1, t._2)
-    }
-  }
+  private def getFormatedDataForJS(data: TreeMap[Long, Int]): Array[Array[Long]] =
+    data.toArray map { t => Array(t._1, t._2) }
 
 }
