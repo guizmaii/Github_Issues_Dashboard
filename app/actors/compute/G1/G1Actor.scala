@@ -14,7 +14,7 @@ private case class G1Data(periodChunk: List[DateTime], lightIssues: List[LightIs
 
 class G1Actor extends Actor with ActorLogging {
 
-  private val daysBetweenGithubOpenDateAndToday: Seq[DateTime] = {
+  private lazy val daysBetweenGithubOpenDateAndToday: Seq[DateTime] = {
     for (i <- 0 to Days.daysBetween(TimeHelper.githubOpenDate, new DateTime()).getDays)
       yield TimeHelper.githubOpenDate.withFieldAdded(DurationFieldType.days, i)
   }
