@@ -14,11 +14,11 @@ private case class G1Data(periodChunk: List[DateTime], lightIssues: List[LightIs
 
 class G1Actor extends Actor with ActorLogging {
 
-  private val daysBetweenGithubOpenDateAndToday: List[DateTime] = {
-    val days: Int = Days.daysBetween(TimeHelper.githubOpenDate, new DateTime()).getDays
-    (for (i <- 0 to days)
-      yield TimeHelper.githubOpenDate.withFieldAdded(DurationFieldType.days, i)).toList
+  private val daysBetweenGithubOpenDateAndToday: Seq[DateTime] = {
+    for (i <- 0 to Days.daysBetween(TimeHelper.githubOpenDate, new DateTime()).getDays)
+      yield TimeHelper.githubOpenDate.withFieldAdded(DurationFieldType.days, i)
   }
+
   var graphPoints = Map[Long, Int]()
   var repo: GithubRepository = null
   var begin = 0L
