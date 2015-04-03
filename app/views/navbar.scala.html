@@ -1,5 +1,3 @@
-@(user: Option[models.User])
-
 <nav class="navbar navbar-default" role="navigation">
     <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
@@ -16,14 +14,7 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
-                @user.map { u =>
-                    <li><a href="@routes.Application.account">@u.fullName</a></li>
-                    <li><a href="@routes.Config.create">Configuration</a></li>
-                    <li><a href="@routes.Application.signOut">Déconnexion</a></li>
-                }.getOrElse {
-                    <li><a href="@routes.Application.signIn">Se logger</a></li>
-                    <li><a href="@routes.Application.signUp">Créer un compte</a></li>
-                }
+                <li><a href="@routes.Config.create">Configuration</a></li>
             </ul>
         </div><!-- /.navbar-collapse -->
     </div><!-- /.container-fluid -->
