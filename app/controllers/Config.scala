@@ -1,16 +1,13 @@
 package controllers
 
-import javax.inject.Inject
-
 import actors.DeleteOrder
-import com.mohiva.play.silhouette.contrib.services.CachedCookieAuthenticator
-import com.mohiva.play.silhouette.core.{Environment, Silhouette}
 import helpers.GithubRepositoryUrlService
-import models.{GithubRepositoryDAO, User}
+import models.GithubRepositoryDAO
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.validation.Constraints._
 import play.api.db.slick._
+import play.api.mvc.{Action, Controller}
 import redis.RedisActorSingleton
 import services.TheGreatDispatcherSingleton
 import views.html
@@ -19,8 +16,7 @@ import scala.concurrent.Future
 
 case class UserRepoUrl(url: String)
 
-class Config @Inject() (implicit val env: Environment[User, CachedCookieAuthenticator])
-  extends Silhouette[User, CachedCookieAuthenticator] {
+class Config extends Controller {
 
   import play.api.Play.current
 
@@ -39,13 +35,13 @@ class Config @Inject() (implicit val env: Environment[User, CachedCookieAuthenti
 
   implicit val implicitRepoForm = repoForm
 
-  def create = SecuredAction.async { implicit request =>
-    DB.withSession( implicit session =>
-      Future.successful(Ok(html.configuration(GithubRepositoryDAO.getAll, request.identity)))
-    )
+  def create = Action.async { implicit request =>
+    DB.withSession(implicit session => {
+      Future.successful(Ok(html.configuration(GithubRepositoryDAO.getAll)))
+    })
   }
 
-  def save = SecuredAction.async { implicit request =>
+  def save = Action.async { implicit request =>
     repoForm.bindFromRequest.fold(
       formWithErrors =>
         Future.successful(Redirect(routes.Config.create()).flashing("failure" -> formWithErrors.errors(0).message)),
@@ -58,7 +54,7 @@ class Config @Inject() (implicit val env: Environment[User, CachedCookieAuthenti
     )
   }
 
-  def delete(id: Long) = SecuredAction.async { implicit request =>
+  def delete(id: Long) = Action.async { implicit request =>
     DB.withSession( implicit session => {
       // Attention l'ordre des opérations est imporant ici
       val repo = GithubRepositoryDAO.get(id)
