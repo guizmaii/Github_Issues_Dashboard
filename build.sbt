@@ -19,8 +19,6 @@ libraryDependencies ++= Seq(
   "io.spray" % "spray-client" % "1.3.1",
   "com.typesafe.play" %% "play-slick" % "0.7.0-M1",
   "joda-time" % "joda-time" % "2.3",
-  "com.mohiva" %% "play-silhouette" % "1.0",
-  "net.codingwell" %% "scala-guice" % "4.0.0-beta4", // Needed by Silhouette
   "org.webjars" %% "webjars-play" % "2.3.0",
   "org.webjars" % "jquery" % "1.11.1",
   "org.webjars" % "bootswatch-readable" % "3.1.1",
