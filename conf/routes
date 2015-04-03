@@ -23,14 +23,6 @@ GET         /config                           @controllers.Config.create
 POST        /config                           @controllers.Config.save
 POST        /config/:id/delete                @controllers.Config.delete(id:Long)
 
-# Silhouette
-GET         /signIn                           @controllers.Application.signIn
-GET         /signUp                           @controllers.Application.signUp
-GET         /signOut                          @controllers.Application.signOut
-GET         /authenticate/:provider           @controllers.SocialAuth.authenticate(provider)
-POST        /authenticate/credentials         @controllers.CredentialsAuth.authenticate
-POST        /signUp                           @controllers.SignUp.signUp
-
 # Webjars routing
 GET         /webjars/*file                    controllers.WebJarAssets.at(file)
 
