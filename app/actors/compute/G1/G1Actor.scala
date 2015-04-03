@@ -10,7 +10,8 @@ import redis.RedisActorSingleton
 
 case class G1ComputedData(repo: GithubRepository, computedData: Map[Long, Int])
 private case class LightIssue(created_at: DateTime, closed_at: DateTime)
-private case class G1Data(periodChunk: List[DateTime], lightIssues: List[LightIssue])
+
+private case class G1Data(periodChunk: Seq[DateTime], lightIssues: List[LightIssue])
 
 class G1Actor extends Actor with ActorLogging {
 

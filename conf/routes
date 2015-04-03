@@ -4,7 +4,6 @@
 
 # Home page
 GET         /                                 @controllers.Application.index
-GET         /account                          @controllers.Application.account
 
 # G1
 GET         /g1                               controllers.G1Controller.getAll

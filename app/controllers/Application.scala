@@ -15,7 +15,7 @@ class Application extends Controller {
 
   def index = Action.async { implicit request =>
     DB withSession { implicit session =>
-      Future.successful(Ok(views.html.index(GithubRepositoryDAO.getAllNonAlreadyFetched))
+      Future.successful(Ok(views.html.index(GithubRepositoryDAO.getAllNonAlreadyFetched)))
     }
   }
 
