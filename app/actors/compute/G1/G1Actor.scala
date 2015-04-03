@@ -9,28 +9,22 @@ import play.api.libs.json._
 import redis.RedisActorSingleton
 
 case class G1ComputedData(repo: GithubRepository, computedData: Map[Long, Int])
-
 private case class LightIssue(created_at: DateTime, closed_at: DateTime)
-
 private case class G1Data(periodChunk: List[DateTime], lightIssues: List[LightIssue])
 
 class G1Actor extends Actor with ActorLogging {
-
-  var graphPoints = Map[Long, Int]()
-  var repo: GithubRepository = null
-
-  var begin = 0L
-  var end = 0L
-
-  var workers = 0
-
-  var githhubActor: ActorRef = null
 
   private val daysBetweenGithubOpenDateAndToday: List[DateTime] = {
     val days: Int = Days.daysBetween(TimeHelper.githubOpenDate, new DateTime()).getDays
     (for (i <- 0 to days)
       yield TimeHelper.githubOpenDate.withFieldAdded(DurationFieldType.days, i)).toList
   }
+  var graphPoints = Map[Long, Int]()
+  var repo: GithubRepository = null
+  var begin = 0L
+  var end = 0L
+  var workers = 0
+  var githhubActor: ActorRef = null
 
   override def receive: Receive = {
 
@@ -43,12 +37,8 @@ class G1Actor extends Actor with ActorLogging {
       val blocks = daysBetweenGithubOpenDateAndToday.grouped( optimisedChunkSize(daysBetweenGithubOpenDateAndToday.size) ).toList
       workers = blocks.length
       val lighterList = getLighterList(data.issues)
-      blocks map (
-        periodChunk =>
-          context.actorOf(
-            Props[G1Calculator],
-            s"G1Calculator_${blocks.indexOf(periodChunk)}"
-          ) ! G1Data(periodChunk,  lighterList)
+      blocks foreach (periodChunk =>
+        context.actorOf(Props[G1Calculator], s"G1Calculator_${blocks.indexOf(periodChunk)}") ! G1Data(periodChunk, lighterList)
       )
 
     case computedGraphPoints: Map[Long, Int] =>
@@ -73,15 +63,14 @@ class G1Actor extends Actor with ActorLogging {
   }
 
   private def getLighterList(issues: List[JsObject]): List[LightIssue] = {
-    (issues map {
-      issue =>
-        val created_at = new DateTime((issue \ "created_at").asInstanceOf[JsString].value)
-        val closed_at = issue \ "closed_at" match {
-          case json: JsString => new DateTime(json.value)
-          case JsNull => null
-        }
-        LightIssue(created_at, closed_at)
-    }).toList
+    issues map { issue =>
+      val created_at = new DateTime((issue \ "created_at").asInstanceOf[JsString].value)
+      val closed_at = issue \ "closed_at" match {
+        case json: JsString => new DateTime(json.value)
+        case JsNull => null
+      }
+      LightIssue(created_at, closed_at)
+    }
   }
 
 }

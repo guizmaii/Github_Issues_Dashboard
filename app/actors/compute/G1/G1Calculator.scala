@@ -9,9 +9,8 @@ class G1Calculator extends Actor {
   override def receive: Receive = {
 
     case g1Data: G1Data =>
-      sender ! (g1Data.periodChunk map {
-        date =>
-          TimeHelper.dateTimeToTimestamp(date) -> g1Data.lightIssues.count(isOpenAtThisDate(_, date))
+      sender ! (g1Data.periodChunk map { date =>
+        TimeHelper.dateTimeToTimestamp(date) -> g1Data.lightIssues.count(isOpenAtThisDate(_, date))
       }).toMap[Long, Int]
 
   }
